@@ -22,6 +22,8 @@
             @include('marketing.contact')
         </main>
 
+        @include('marketing.footer')
+
         <div data-search-modal class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="search-title">
             <button type="button" class="absolute inset-0 bg-charcoal/50 backdrop-blur-sm" data-close-search aria-label="Close search"></button>
             <div class="relative mx-auto mt-[12vh] w-[min(640px,92vw)] overflow-hidden rounded-[28px] border border-line bg-ivory shadow-2xl">
@@ -41,7 +43,7 @@
                         ['Project Management', '#features', 'Timelines and project organisation'],
                         ['Team Collaboration', '#features', 'One workspace for the whole team'],
                         ['Quotations & Approvals', '#features', 'Request, compare and approve'],
-                        ['Sustainable Choices', '#features', 'Materials with a lighter footprint'],
+                        ['Notifications', '#features', 'Calm, timely project updates'],
                         ['Log in', route('login'), 'Return to your renovation journey'],
                         ['Get Started', route('register'), 'Create a RenovaHub account'],
                     ] as [$label, $href, $hint])
@@ -59,19 +61,51 @@
             </div>
         </div>
 
-        <div data-video-modal class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="video-title">
-            <button type="button" class="absolute inset-0 bg-charcoal/70 backdrop-blur-sm" data-close-video aria-label="Close video"></button>
-            <div class="relative mx-auto mt-[8vh] w-[min(960px,94vw)] overflow-hidden rounded-[28px] bg-forest text-ivory shadow-2xl">
-                <button type="button" data-close-video class="absolute right-4 top-4 z-10 rounded-full bg-white/10 px-3 py-1.5 text-xs uppercase tracking-[0.14em] text-white transition hover:bg-white/20">Close</button>
-                <div class="relative flex min-h-[320px] flex-col items-center justify-center px-6 py-16 text-center sm:min-h-[460px]" style="background-image: linear-gradient(to top, rgba(23,63,42,0.82), rgba(23,63,42,0.35)), url('{{ asset('images/renova/hero.jpg') }}'); background-size: cover; background-position: center;">
-                    <span class="inline-flex h-20 w-20 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur">
-                        <svg viewBox="0 0 24 24" class="ml-1 h-8 w-8" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
-                    </span>
-                    <p class="mt-6 text-[11px] uppercase tracking-[0.22em] text-white/70">RenovaHub</p>
-                    <h2 id="video-title" class="mt-3 font-serif text-4xl font-medium tracking-[-0.03em] sm:text-5xl">How RenovaHub Works</h2>
-                    <p class="mt-4 max-w-md text-sm leading-relaxed text-white/80">
-                        A short introduction to planning a renovation, inviting your team, comparing quotations and following progress in one calm workspace. The full film will play here when it is ready.
-                    </p>
+        @php
+            $introVideoPath = public_path('videos/renovahub-intro.mp4');
+            $hasIntroVideo = is_file($introVideoPath) && filesize($introVideoPath) > 0;
+        @endphp
+        <div data-video-modal class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="video-title" @if($hasIntroVideo) data-video-available @endif>
+            <button type="button" class="absolute inset-0 bg-black/75 backdrop-blur-sm" data-close-video aria-label="Close video"></button>
+            <div class="video-dialog relative mx-auto mt-[7vh] w-[min(980px,94vw)]">
+                <button type="button" data-close-video class="absolute -top-3 right-0 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-charcoal shadow-lg transition hover:bg-sand sm:-right-3" aria-label="Close">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+                <div data-video-frame class="overflow-hidden rounded-[24px] bg-black text-ivory shadow-2xl">
+                    <h2 id="video-title" class="sr-only">RenovaHub Introduction</h2>
+                    @if ($hasIntroVideo)
+                        <video
+                            data-video-player
+                            class="aspect-video w-full bg-black"
+                            playsinline
+                            preload="metadata"
+                            poster="{{ asset('images/renova/hero.jpg') }}"
+                        >
+                            <source src="{{ asset('videos/renovahub-intro.mp4') }}" type="video/mp4">
+                        </video>
+                    @endif
+                    <div data-video-fallback class="{{ $hasIntroVideo ? 'hidden' : 'flex' }} aspect-video flex-col items-center justify-center bg-cover px-6 text-center" style="background-image: linear-gradient(to top, rgba(10,31,22,0.88), rgba(10,31,22,0.42)), url('{{ asset('images/renova/hero.jpg') }}');">
+                        <span class="inline-flex h-16 w-16 items-center justify-center rounded-full border border-white/30 bg-white/10">
+                            <svg viewBox="0 0 24 24" class="ml-1 h-7 w-7" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
+                        </span>
+                        <p class="mt-4 font-serif text-3xl">RenovaHub Introduction</p>
+                        <p class="mt-2 max-w-md text-sm text-white/75">The introduction video will play here once it is added.</p>
+                    </div>
+                    <div data-video-controls class="flex items-center gap-3 bg-[#0a1f16] px-4 py-3">
+                        <button type="button" data-video-play class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-forest disabled:opacity-40" aria-label="Play" @disabled(! $hasIntroVideo)>
+                            <svg data-icon-play viewBox="0 0 24 24" class="ml-0.5 h-4 w-4" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
+                            <svg data-icon-pause viewBox="0 0 24 24" class="hidden h-4 w-4" fill="currentColor"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+                        </button>
+                        <input data-video-seek type="range" min="0" max="100" value="0" step="0.1" class="video-range min-w-0 flex-1" aria-label="Seek" @disabled(! $hasIntroVideo)>
+                        <button type="button" data-video-mute class="inline-flex h-9 w-9 items-center justify-center rounded-full text-white disabled:opacity-40" aria-label="Mute" @disabled(! $hasIntroVideo)>
+                            <svg data-icon-volume viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10h3l4-3v10l-4-3H4Z"/><path d="M16 9.5a3.5 3.5 0 0 1 0 5M18.2 7.2a6.5 6.5 0 0 1 0 9.6"/></svg>
+                            <svg data-icon-muted viewBox="0 0 24 24" class="hidden h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10h3l4-3v10l-4-3H4Z"/><path d="m16 10 4 4M20 10l-4 4"/></svg>
+                        </button>
+                        <input data-video-volume type="range" min="0" max="1" value="1" step="0.05" class="video-range w-20" aria-label="Volume" @disabled(! $hasIntroVideo)>
+                        <button type="button" data-video-full class="inline-flex h-9 w-9 items-center justify-center rounded-full text-white disabled:opacity-40" aria-label="Fullscreen" @disabled(! $hasIntroVideo)>
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

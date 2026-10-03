@@ -21,3 +21,6 @@ Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
 
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->name('google.callback');
+
+Route::view('/privacy-policy', 'marketing.legal', ['page' => 'privacy'])->name('privacy');
+Route::view('/terms-of-service', 'marketing.legal', ['page' => 'terms'])->name('terms.public');
