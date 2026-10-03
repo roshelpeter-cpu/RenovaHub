@@ -15,6 +15,19 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                outfit: ['Outfit', ...defaultTheme.fontFamily.sans],
+                serif: ['Fraunces', ...defaultTheme.fontFamily.serif],
+            },
+            colors: {
+                forest: '#173F2A',
+                leaf: '#2F6B49',
+                olive: '#71856B',
+                cream: '#F7F4EC',
+                sand: '#EAE4D8',
+                ivory: '#FCFBF8',
+                charcoal: '#1E2420',
+                mist: '#66706A',
+                line: '#DDD8CD',
             },
         },
     },
