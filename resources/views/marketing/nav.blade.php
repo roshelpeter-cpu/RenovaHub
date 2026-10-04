@@ -2,12 +2,12 @@
     <div class="mx-auto flex h-[4.25rem] max-w-[1200px] items-center justify-between gap-4 px-5 lg:px-6">
         <x-brand-logo />
 
-        <nav class="hidden items-center gap-8 text-[14px] lg:flex" aria-label="Primary">
-            <a href="#top" data-nav="top" class="nav-link is-active">Home</a>
-            <a href="#about" data-nav="about" class="nav-link">About</a>
-            <a href="#features" data-nav="features" class="nav-link">Features</a>
-            <a href="#how-it-works" data-nav="how-it-works" class="nav-link">How It Works</a>
-            <a href="#contact" data-nav="contact" class="nav-link">Contact</a>
+        <nav class="hidden min-w-0 items-center gap-x-1 text-[13px] lg:flex xl:gap-x-2 xl:text-sm" aria-label="Primary">
+            <a href="#top" data-nav="top" class="nav-link whitespace-nowrap rounded-full px-2.5 py-1.5 transition hover:bg-cream/80 is-active">Home</a>
+            <a href="#about" data-nav="about" class="nav-link whitespace-nowrap rounded-full px-2.5 py-1.5 transition hover:bg-cream/80">About</a>
+            <a href="#features" data-nav="features" class="nav-link whitespace-nowrap rounded-full px-2.5 py-1.5 transition hover:bg-cream/80">Features</a>
+            <a href="#how-it-works" data-nav="how-it-works" class="nav-link whitespace-nowrap rounded-full px-2.5 py-1.5 transition hover:bg-cream/80">How It Works</a>
+            <a href="#contact" data-nav="contact" class="nav-link whitespace-nowrap rounded-full px-2.5 py-1.5 transition hover:bg-cream/80">Contact</a>
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">

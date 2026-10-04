@@ -1,21 +1,11 @@
 <section id="how-it-works" class="relative scroll-mt-24 overflow-hidden">
-    <div class="pointer-events-none absolute right-[2%] top-4 hidden h-[22rem] w-[44%] lg:block" aria-hidden="true">
-        <svg viewBox="0 0 560 280" class="h-full w-full text-[#b7b3a4]" fill="none" stroke="currentColor" stroke-width="1.15" style="mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);">
-            <path d="M36 214h500" />
-            <path d="M78 214V96h250v118" />
-            <path d="M108 96V52h190v44" />
-            <path d="M96 52h214" />
-            <path d="M124 78h42M182 78h42M240 78h42" />
-            <path d="M124 78v18M166 78v18M182 78v18M224 78v18M240 78v18M282 78v18" />
-            <path d="M110 132h70v40h-70zM196 132h70v40h-70zM282 132h28v82" />
-            <path d="M118 148h18M146 148h18M204 148h18M232 148h18" />
-            <path d="M328 214V138h168v76" />
-            <path d="M348 158h36v24h-36zM398 158h36v24h-36zM448 158h28v56" />
-            <path d="M78 214V168h36" />
-            <path d="M470 214c8-36 28-58 18-96 24 10 46 40 42 78" />
-            <path d="M488 118c10-18 6-34-4-46" />
-            <path d="M40 188c16-22 8-44-6-58 16 4 34 22 36 46" />
-        </svg>
+    {{-- Supplied architectural drawing. Transparent areas keep the section background visible, so the sketch is not framed as a photograph. --}}
+    <div class="group absolute right-[2%] top-4 hidden h-[22rem] w-[44%] lg:block" aria-hidden="true">
+        <img
+            src="{{ asset('images/renovahub-how-it-works.png') }}"
+            alt=""
+            class="h-full w-full object-contain object-right-top transition-transform duration-700 group-hover:scale-105"
+        >
     </div>
     <div class="pointer-events-none absolute -left-8 top-16 hidden h-32 w-32 text-[#8ea57a]/30 lg:block" aria-hidden="true">
         <x-leaf class="h-32 w-32" />
@@ -33,20 +23,18 @@
 
         @php
             $steps = [
-                ['01', 'Create Your Project', 'Set your project goals, budget and timeline.', 'doc', true],
-                ['02', 'Invite Your Team', 'Add homeowners, designers and contractors.', 'users', false],
-                ['03', 'Plan & Assign Tasks', 'Break the project into tasks and assign responsibilities.', 'list', false],
-                ['04', 'Manage Quotations', 'Request, compare and approve quotations.', 'file', false],
-                ['05', 'Track Progress', 'Monitor project progress and updates.', 'chart', false],
-                ['06', 'Complete Your Renovation', 'Finalize the project and enjoy your new space.', 'check', false],
+                ['01', 'Create Your Project', 'Add the project details and property location.', 'doc', true],
+                ['02', 'Build Your Design', 'Shape the design direction for the renovation.', 'pen', false],
+                ['03', 'Coordinate Your Team', 'Keep the homeowner, designer and contractor in one workspace.', 'users', false],
+                ['04', 'Manage the Renovation', 'Follow the work from planning through completion.', 'check', false],
             ];
         @endphp
 
-        <ol class="relative mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-4">
+        <ol class="relative mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($steps as [$index, $title, $copy, $icon, $active])
-                <li class="relative text-center lg:px-1">
+                <li class="group relative rounded-2xl bg-white/75 p-4 text-center shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-xl">
                     @if (! $loop->last)
-                        <span class="pointer-events-none absolute left-[calc(50%+1.35rem)] top-4 hidden text-olive/70 lg:block" aria-hidden="true">
+                        <span class="pointer-events-none absolute -right-3 top-7 z-10 hidden text-olive/70 lg:block" aria-hidden="true">
                             <svg viewBox="0 0 28 12" class="h-3 w-7" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M0 6h22M18 2l6 4-6 4"/></svg>
                         </span>
                     @endif
@@ -59,14 +47,8 @@
                             @case('users')
                                 <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 12a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm8 .5a2.5 2.5 0 1 0-2.5-2.5A2.5 2.5 0 0 0 16 12.5ZM3.5 19a4.5 4.5 0 0 1 9 0M14.2 19a3.4 3.4 0 0 1 6.3-1.7"/></svg>
                                 @break
-                            @case('list')
-                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 6h11M8 12h11M8 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
-                                @break
-                            @case('file')
-                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3.5h8l4 4V20.5H7Z"/><path d="M15 3.5V8h4"/></svg>
-                                @break
-                            @case('chart')
-                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19h16M7 16v-4M12 16V8M17 16v-6"/></svg>
+                            @case('pen')
+                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4l11-11-4-4L4 16v4Z"/><path d="m13 7 4 4"/></svg>
                                 @break
                             @default
                                 <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>

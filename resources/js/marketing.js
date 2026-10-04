@@ -1,3 +1,5 @@
+// Landing-page behaviour: navigation state, search, and the introduction video.
+// The hero photograph is a single static image, so nothing here rotates slides.
 document.addEventListener('DOMContentLoaded', () => {
     const page = document.querySelector('[data-page="marketing"]');
     if (!page) {
@@ -240,30 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
         contactForm.querySelector('[data-contact-fields]')?.classList.add('hidden');
         contactForm.querySelector('[data-contact-success]')?.classList.remove('hidden');
     });
-
-    const heroSlides = [...document.querySelectorAll('[data-hero-slide]')];
-    const heroDots = [...document.querySelectorAll('[data-hero-dot]')];
-    let heroIndex = 0;
-
-    const showHero = (index) => {
-        if (!heroSlides.length) {
-            return;
-        }
-        heroIndex = (index + heroSlides.length) % heroSlides.length;
-        heroSlides.forEach((slide, slideIndex) => {
-            slide.classList.toggle('opacity-100', slideIndex === heroIndex);
-            slide.classList.toggle('opacity-0', slideIndex !== heroIndex);
-        });
-        heroDots.forEach((dot, dotIndex) => {
-            dot.classList.toggle('is-active', dotIndex === heroIndex);
-        });
-    };
-
-    heroDots.forEach((dot) => {
-        dot.addEventListener('click', () => showHero(Number(dot.dataset.heroDot)));
-    });
-
-    document.querySelector('[data-hero-next]')?.addEventListener('click', () => showHero(heroIndex + 1));
 
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') {

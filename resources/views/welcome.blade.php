@@ -38,7 +38,7 @@
                         ['Home', '#top', 'Landing page'],
                         ['About', '#about', 'Homeowners, designers and contractors'],
                         ['Features', '#features', 'Project management, tasks, quotations, documents'],
-                        ['How It Works', '#how-it-works', 'Create, invite, plan, quote, track, complete'],
+                        ['How It Works', '#how-it-works', 'Create a project, build the design, coordinate the team'],
                         ['Contact', '#contact', 'Email, phone and Colombo studio'],
                         ['Project Management', '#features', 'Timelines and project organisation'],
                         ['Team Collaboration', '#features', 'One workspace for the whole team'],
@@ -79,12 +79,12 @@
                             class="aspect-video w-full bg-black"
                             playsinline
                             preload="metadata"
-                            poster="{{ asset('images/renova/hero.jpg') }}"
+                            poster="{{ asset('images/renovahub-hero.jpg') }}"
                         >
                             <source src="{{ asset('videos/renovahub-intro.mp4') }}" type="video/mp4">
                         </video>
                     @endif
-                    <div data-video-fallback class="{{ $hasIntroVideo ? 'hidden' : 'flex' }} aspect-video flex-col items-center justify-center bg-cover px-6 text-center" style="background-image: linear-gradient(to top, rgba(10,31,22,0.88), rgba(10,31,22,0.42)), url('{{ asset('images/renova/hero.jpg') }}');">
+                    <div data-video-fallback class="{{ $hasIntroVideo ? 'hidden' : 'flex' }} aspect-video flex-col items-center justify-center bg-cover px-6 text-center" style="background-image: linear-gradient(to top, rgba(10,31,22,0.88), rgba(10,31,22,0.42)), url('{{ asset('images/renovahub-hero.jpg') }}');">
                         <span class="inline-flex h-16 w-16 items-center justify-center rounded-full border border-white/30 bg-white/10">
                             <svg viewBox="0 0 24 24" class="ml-1 h-7 w-7" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
                         </span>

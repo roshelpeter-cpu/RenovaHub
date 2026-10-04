@@ -27,6 +27,12 @@
 
             <x-validation-errors class="mt-6" />
 
+            @session('status')
+                <div class="mt-4 rounded-2xl border border-line bg-sand/70 px-4 py-3 text-sm text-forest" role="status">
+                    {{ $value }}
+                </div>
+            @endsession
+
             <form method="POST" action="{{ route('register') }}" class="mt-8">
                 @csrf
 

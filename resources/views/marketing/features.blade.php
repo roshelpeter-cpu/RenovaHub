@@ -33,8 +33,8 @@
 
         <div id="all-features" class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @foreach ($features as [$title, $copy, $image, $alt, $icon])
-                <article class="flex h-full flex-col overflow-hidden rounded-[22px] border border-[#ece7dc] bg-white shadow-[0_16px_36px_-28px_rgba(30,36,32,0.45)]">
-                    <img src="{{ asset('images/renova/'.$image) }}" alt="{{ $alt }}" class="h-[148px] w-full object-cover">
+                <article class="group flex h-full flex-col overflow-hidden rounded-[22px] border border-[#ece7dc] bg-white shadow-[0_16px_36px_-28px_rgba(30,36,32,0.45)] transition duration-500 hover:-translate-y-1 hover:shadow-xl">
+                    <img src="{{ asset('images/renova/'.$image) }}" alt="{{ $alt }}" class="h-[148px] w-full object-cover transition-transform duration-700 group-hover:scale-105">
                     <div class="relative flex flex-1 flex-col px-4 pb-4 pt-0">
                         <span class="-mt-5 inline-flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#e7f0e4] text-forest">
                             @switch($icon)

@@ -1,17 +1,11 @@
 <section id="top" class="relative scroll-mt-24">
+    {{-- One fixed architectural photograph. There is no carousel and no slide controls. --}}
     <div class="relative min-h-[640px] overflow-hidden sm:min-h-[700px] lg:min-h-[760px]">
-        @foreach ([
-            ['hero.jpg', 'Contemporary house with a pool, glass and planting'],
-            ['about-exterior.jpg', 'Modern residential facade with timber, glass and trees'],
-            ['feature-progress.jpg', 'Evening view of a modern home entrance'],
-        ] as [$image, $alt])
-            <img
-                src="{{ asset('images/renova/'.$image) }}"
-                alt="{{ $alt }}"
-                data-hero-slide
-                class="absolute inset-0 h-full w-full object-cover object-[72%_center] transition-opacity duration-700 {{ $loop->first ? 'opacity-100' : 'opacity-0' }}"
-            >
-        @endforeach
+        <img
+            src="{{ asset('images/renovahub-hero.jpg') }}"
+            alt="Modern timber and glass house with a pool, trees and landscaping"
+            class="absolute inset-0 h-full w-full object-cover object-[72%_center]"
+        >
 
         <div class="hero-wash pointer-events-none absolute inset-0"></div>
         <div class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#F6F3EC] to-transparent"></div>
@@ -45,38 +39,20 @@
                         Learn More
                         <svg viewBox="0 0 16 16" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5 8 10.5 12 6.5"/></svg>
                     </a>
-                    <button type="button" data-open-video class="group inline-flex items-center gap-3 rounded-full py-1 pl-1 pr-3 text-left">
-                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-forest text-ivory shadow-sm transition group-hover:bg-leaf">
-                            <svg viewBox="0 0 24 24" class="ml-0.5 h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
-                        </span>
-                        <span>
-                            <span class="block text-sm font-medium text-charcoal">Play Video</span>
-                            <span class="block text-xs text-mist">See how it works</span>
-                        </span>
-                    </button>
                 </div>
             </div>
 
-            <div class="pointer-events-none hidden justify-end pt-4 text-right text-white lg:col-span-6 lg:flex">
-                <div class="max-w-[11.5rem] drop-shadow-[0_8px_18px_rgba(0,0,0,0.28)]">
-                    <p class="font-serif text-[2.15rem] font-medium leading-[1.02] tracking-[-0.03em]">
+            <div class="pointer-events-none hidden justify-end pt-8 lg:col-span-6 lg:flex">
+                <div class="max-w-[14rem] rounded-2xl bg-[#123d2b]/80 p-6 text-right text-[#f5f1e8] shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] backdrop-blur-sm">
+                    <p class="font-serif text-[1.9rem] font-medium leading-[1.05] tracking-[-0.03em]">
                         Good Design<br>Builds<br>Better<br>Lives
                     </p>
-                    <span class="ml-auto mt-4 block h-px w-10 bg-white/80"></span>
-                    <p class="mt-3 text-[13px] leading-relaxed text-white/90">
+                    <span class="ml-auto mt-4 block h-px w-10 bg-[#f5f1e8]/70"></span>
+                    <p class="mt-3 text-[13px] leading-relaxed text-[#f5f1e8]/90">
                         Design<br>Plan<br>Collaborate<br>Build together
                     </p>
                 </div>
             </div>
-        </div>
-
-        <div class="absolute bottom-24 right-5 z-20 flex items-center gap-2.5 rounded-full bg-charcoal/35 px-3 py-2 text-white backdrop-blur-md sm:right-8 lg:bottom-28">
-            @foreach (['01', '02', '03'] as $label)
-                <button type="button" data-hero-dot="{{ $loop->index }}" class="hero-dot {{ $loop->first ? 'is-active' : '' }}" aria-label="Show image {{ $label }}">{{ $label }}</button>
-            @endforeach
-            <button type="button" data-hero-next class="hero-dot" aria-label="Next image">
-                <svg viewBox="0 0 16 16" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-            </button>
         </div>
     </div>
 

@@ -121,8 +121,9 @@ html {
 }
 
 [data-marketing-nav].is-scrolled {
-    background: rgba(246, 243, 236, 0.94);
-    box-shadow: 0 10px 30px -24px rgba(30, 36, 32, 0.55);
+    background: rgba(246, 243, 236, 0.95);
+    border-bottom: 1px solid rgba(221, 216, 205, 0.95);
+    box-shadow: 0 10px 30px -22px rgba(30, 36, 32, 0.55);
     backdrop-filter: blur(12px);
 }
 
@@ -172,7 +173,7 @@ html {
 
 .nav-link {
     position: relative;
-    color: #66706A;
+    color: #173F2A;
     transition: color 0.2s ease;
 }
 
@@ -218,16 +219,14 @@ html {
         rgba(246, 243, 236, 0) 78%);
 }
 
-.hero-dot {
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    transition: color 0.2s ease;
-}
-
-.hero-dot.is-active {
-    color: #fff;
-    font-weight: 600;
+@media (max-width: 1023px) {
+    .hero-wash {
+        background: linear-gradient(180deg,
+            rgba(246, 243, 236, 0.94) 0%,
+            rgba(246, 243, 236, 0.9) 46%,
+            rgba(246, 243, 236, 0.55) 68%,
+            rgba(246, 243, 236, 0.08) 100%);
+    }
 }
 
 [data-video-modal] .video-dialog {
