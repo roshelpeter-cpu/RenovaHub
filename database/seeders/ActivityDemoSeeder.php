@@ -23,7 +23,7 @@ class ActivityDemoSeeder extends Seeder
             $project->activity()->delete();
             $start = Carbon::parse($project->expected_start_date);
 
-            if ($project->name === 'Modern Villa Renovation') {
+            if ($project->name === 'Lakeview Villa Renovation') {
                 $this->villaFeed($activity, $project, $homeowner);
 
                 continue;

@@ -25,7 +25,8 @@ class DashboardService
             ->latest()
             ->get();
 
-        $active = $projects->first(fn (Project $project) => $project->status === Project::STATUS_IN_PROGRESS && $project->name === 'Modern Villa Renovation')
+        $active = $projects->first(fn (Project $project) => $project->status === Project::STATUS_IN_PROGRESS && $project->name === 'Lakeview Villa Renovation')
+            ?? $projects->first(fn (Project $project) => $project->status === Project::STATUS_IN_PROGRESS && $project->name === 'Modern Villa Renovation')
             ?? $projects->firstWhere('status', Project::STATUS_IN_PROGRESS)
             ?? $projects->first();
 

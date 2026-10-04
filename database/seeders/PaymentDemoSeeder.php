@@ -37,7 +37,7 @@ class PaymentDemoSeeder extends Seeder
             ]);
         }
 
-        $villa = $homeowner->projects()->where('name', 'Modern Villa Renovation')->firstOrFail();
+        $villa = $homeowner->projects()->where('name', 'Lakeview Villa Renovation')->firstOrFail();
         $villa->payments()->create([
             'quotation_id' => $villa->quotations()->where('status', 'approved')->first()?->id,
             'reference' => 'RH-PAY-'.$sequence,

@@ -18,6 +18,7 @@ class ProfessionalProfile extends Model
         'title',
         'specialization',
         'bio',
+        'about',
         'location',
         'avatar_path',
         'years_experience',
@@ -90,6 +91,24 @@ class ProfessionalProfile extends Model
     public function coverUrl(): ?string
     {
         return $this->cover_path ? asset($this->cover_path) : $this->avatarUrl();
+    }
+
+    /**
+     * Contractors list as companies, so the card uses a site/project photo
+     * rather than a portrait that belongs on a designer card.
+     */
+    public function listingImageUrl(): ?string
+    {
+        if ($this->professional_type === 'contractor') {
+            return $this->coverUrl() ?: $this->avatarUrl();
+        }
+
+        return $this->avatarUrl() ?: $this->coverUrl();
+    }
+
+    public function aboutText(): string
+    {
+        return $this->about ?: (string) $this->bio;
     }
 
     /**

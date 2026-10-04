@@ -25,12 +25,12 @@ class QuotationDemoSeeder extends Seeder
                 $this->quote($project, $contractorId, 'Q-100', 'Final construction quotation', (float) $project->current_budget, Quotation::STATUS_APPROVED);
             }
 
-            if ($project->name === 'Modern Villa Renovation') {
+            if ($project->name === 'Lakeview Villa Renovation') {
                 $this->quote($project, $contractorId, 'Q-241', 'Kitchen renovation quotation', 485000, Quotation::STATUS_PENDING);
                 $this->quote($project, $contractorId, 'Q-240', 'Approved living room package', 2100000, Quotation::STATUS_APPROVED);
             }
 
-            if ($project->name === 'Outdoor Living Extension') {
+            if ($project->name === 'Apartment Interior Makeover') {
                 $this->quote($project, $contractorId, 'Q-310', 'Patio and screen quotation', 1600000, Quotation::STATUS_APPROVED);
             }
         }

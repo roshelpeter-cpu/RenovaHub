@@ -17,6 +17,11 @@ class ProjectReferenceImage extends Model
 
     public function url(): string
     {
+        // Demo galleries reuse public/images assets. Uploaded files stay on the public disk.
+        if (str_starts_with($this->path, 'images/')) {
+            return asset($this->path);
+        }
+
         return Storage::disk('public')->url($this->path);
     }
 }

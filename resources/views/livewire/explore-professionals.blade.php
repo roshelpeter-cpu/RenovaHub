@@ -62,14 +62,11 @@
         <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @forelse ($featured as $profile)
                 @php
-                    $featuredCase = $profile->caseStudies->firstWhere('featured', true) ?? $profile->caseStudies->first();
-                    $portfolioUrl = $featuredCase
-                        ? route('homeowner.professionals.project', [$profile->user, $featuredCase])
-                        : route('homeowner.professionals.show', $profile->user);
+                    $portfolioUrl = route('homeowner.professionals.show', $profile->user);
                 @endphp
                 <article class="relative overflow-hidden rounded-[1.35rem] border border-[#ece7dc] bg-white shadow-sm">
                     <a href="{{ $portfolioUrl }}" class="block">
-                        <img src="{{ $profile->avatarUrl() ?: $profile->coverUrl() }}" alt="" class="h-52 w-full object-cover">
+                        <img src="{{ $profile->listingImageUrl() }}" alt="" class="h-64 w-full object-cover">
                     </a>
                     <button type="button" wire:click.stop="toggleFavourite({{ $profile->id }})" class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#123D2B] shadow-sm" aria-label="Favourite">
                         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="{{ $favouriteIds->contains($profile->id) ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7-4.4-9.2-8.2C1 8.8 2.8 5 6.5 5 8.6 5 10 6.2 12 8.2 14 6.2 15.4 5 17.5 5 21.2 5 23 8.8 21.2 11.8 19 15.6 12 20 12 20Z"/></svg>
@@ -105,24 +102,19 @@
         <div class="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             @forelse ($all as $profile)
                 @php
-                    $featuredCase = $profile->caseStudies->firstWhere('featured', true) ?? $profile->caseStudies->first();
-                    $portfolioUrl = $featuredCase
-                        ? route('homeowner.professionals.project', [$profile->user, $featuredCase])
-                        : route('homeowner.professionals.show', $profile->user);
+                    $portfolioUrl = route('homeowner.professionals.show', $profile->user);
                 @endphp
-                <article class="flex flex-col rounded-[1.4rem] border border-[#ece7dc] bg-white p-5">
-                    <div class="flex items-start gap-3">
-                        <img src="{{ $profile->avatarUrl() }}" alt="" class="h-16 w-16 rounded-full object-cover">
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="font-medium text-[#123D2B]">{{ $profile->displayName() }}</h3>
-                                @if ($profile->verified)
-                                    <span class="rounded-full bg-[#E7F0E4] px-2 py-0.5 text-[11px] font-medium text-[#123D2B]">Verified</span>
-                                @endif
-                            </div>
-                            <p class="mt-1 text-sm text-[#66756C]">★ {{ number_format((float) $profile->rating, 1) }} ({{ $profile->review_count }} reviews)</p>
-                            <p class="text-sm text-[#66756C]">{{ $profile->location }}</p>
+                <article class="flex flex-col rounded-[1.4rem] border border-[#ece7dc] bg-white p-5 shadow-sm">
+                    <img src="{{ $profile->listingImageUrl() }}" alt="" class="h-48 w-full rounded-2xl object-cover">
+                    <div class="mt-4 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="font-medium text-[#123D2B]">{{ $profile->displayName() }}</h3>
+                            @if ($profile->verified)
+                                <span class="rounded-full bg-[#E7F0E4] px-2 py-0.5 text-[11px] font-medium text-[#123D2B]">Verified</span>
+                            @endif
                         </div>
+                        <p class="mt-1 text-sm text-[#66756C]">★ {{ number_format((float) $profile->rating, 1) }} ({{ $profile->review_count }} reviews)</p>
+                        <p class="text-sm text-[#66756C]">{{ $profile->location }}{{ str_contains($profile->location ?? '', 'Sri Lanka') ? '' : ', Sri Lanka' }}</p>
                     </div>
                     <p class="mt-3 text-sm leading-relaxed text-[#66756C]">{{ $profile->bio }}</p>
                     <div class="mt-3 flex flex-wrap gap-1.5">
@@ -135,7 +127,7 @@
                             <img src="{{ $item->imageUrl() }}" alt="" class="h-24 w-full rounded-xl object-cover">
                         @endforeach
                     </div>
-                    <a href="{{ $portfolioUrl }}" class="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#123D2B] px-4 py-2.5 text-sm font-medium text-white">View Portfolio →</a>
+                    <a href="{{ $portfolioUrl }}" class="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#123D2B] px-4 py-2.5 text-sm font-medium text-white">View Profile</a>
                 </article>
             @empty
                 <p class="text-sm text-[#66756C]">No professionals match these filters.</p>

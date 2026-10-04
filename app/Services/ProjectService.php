@@ -11,6 +11,46 @@ use Illuminate\Support\Facades\Storage;
 class ProjectService
 {
     public function __construct(private ProjectInvitationService $invitations) {}
+
+    /**
+     * Catalogue totals and lists are built here so the Blade template never
+     * runs its own queries. Ongoing means in_progress to match the screenshot.
+     *
+     * @return array<string, mixed>
+     */
+    public function catalogue(User $homeowner, string $status, string $sort): array
+    {
+        $owned = $homeowner->projects();
+        $summary = [
+            'total' => (clone $owned)->count(),
+            'ongoing' => (clone $owned)->where('status', Project::STATUS_IN_PROGRESS)->count(),
+            'completed' => (clone $owned)->where('status', Project::STATUS_COMPLETED)->count(),
+            'value' => (float) (clone $owned)->sum('estimated_budget'),
+        ];
+
+        $query = $homeowner->projects()
+            ->with(['designer.professionalProfile', 'contractor.professionalProfile', 'progressStages', 'referenceImages'])
+            ->when($status === 'ongoing', fn ($inner) => $inner->where('status', Project::STATUS_IN_PROGRESS))
+            ->when($status === 'completed', fn ($inner) => $inner->where('status', Project::STATUS_COMPLETED))
+            ->when($sort === 'oldest', fn ($inner) => $inner->oldest())
+            ->when($sort === 'budget_high', fn ($inner) => $inner->orderByDesc('estimated_budget'))
+            ->when($sort !== 'oldest' && $sort !== 'budget_high', fn ($inner) => $inner->latest());
+
+        $projects = $query->get();
+        $projects->each(function (Project $project) {
+            $project->designer?->professionalProfile?->setRelation('user', $project->designer);
+            $project->contractor?->professionalProfile?->setRelation('user', $project->contractor);
+        });
+
+        return [
+            'summary' => $summary,
+            'ongoing' => $projects->where('status', Project::STATUS_IN_PROGRESS)->values(),
+            'completed' => $projects->where('status', Project::STATUS_COMPLETED)->values(),
+            'projects' => $projects,
+            'status' => in_array($status, ['ongoing', 'completed'], true) ? $status : 'all',
+            'sort' => in_array($sort, ['oldest', 'budget_high'], true) ? $sort : 'newest',
+        ];
+    }
     /**
      * Create the project through the authenticated homeowner relationship
      * so ownership is set on the server and cannot be posted from the browser.

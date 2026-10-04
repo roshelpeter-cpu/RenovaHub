@@ -1,18 +1,18 @@
 @php
+    $section = $section ?? 'overview';
     $tabs = [
-        'homeowner.projects.show' => 'Overview',
-        'homeowner.projects.tasks' => 'Tasks',
-        'homeowner.projects.documents' => 'Documents',
-        'homeowner.projects.mood-board' => 'Mood Board',
-        'homeowner.projects.quotations' => 'Quotations',
-        'homeowner.projects.change-requests' => 'Change Requests',
-        'homeowner.projects.messages' => 'Messages',
-        'homeowner.projects.payments' => 'Payments',
-        'homeowner.projects.activity' => 'Activity',
+        ['Overview', route('homeowner.projects.show', $project), $section === 'overview' && request()->routeIs('homeowner.projects.show')],
+        ['Design Process', route('homeowner.projects.show', [$project, 'tab' => 'design-process']), $section === 'design-process'],
+        ['Tasks', route('homeowner.projects.tasks', $project), request()->routeIs('homeowner.projects.tasks*')],
+        ['Documents', route('homeowner.projects.documents', $project), request()->routeIs('homeowner.projects.documents*')],
+        ['Mood Board', route('homeowner.projects.mood-board', $project), request()->routeIs('homeowner.projects.mood-board*')],
+        ['Quotations', route('homeowner.projects.quotations', $project), request()->routeIs('homeowner.quotations*', 'homeowner.projects.quotations*')],
+        ['Change Requests', route('homeowner.projects.change-requests', $project), request()->routeIs('homeowner.change-requests*', 'homeowner.projects.change-requests*')],
+        ['Messages', route('homeowner.projects.messages', $project), request()->routeIs('homeowner.projects.messages*')],
     ];
 @endphp
-<nav class="mt-6 flex gap-2 overflow-x-auto pb-1" aria-label="Project sections">
-    @foreach ($tabs as $routeName => $label)
-        <a href="{{ route($routeName, $project) }}" class="shrink-0 rounded-full px-4 py-2 text-sm transition duration-300 {{ request()->routeIs($routeName) ? 'bg-forest text-ivory' : 'bg-white text-charcoal hover:text-forest' }}" @if(request()->routeIs($routeName)) aria-current="page" @endif>{{ $label }}</a>
+<nav class="mt-6 flex gap-6 overflow-x-auto border-b border-[#ece7dc] text-sm" aria-label="Project sections">
+    @foreach ($tabs as [$label, $href, $active])
+        <a href="{{ $href }}" class="shrink-0 pb-3 {{ $active ? 'border-b-2 border-[#123D2B] font-medium text-[#123D2B]' : 'text-[#66756C] hover:text-[#123D2B]' }}" @if($active) aria-current="page" @endif>{{ $label }}</a>
     @endforeach
 </nav>

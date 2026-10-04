@@ -17,8 +17,8 @@ class MoodBoardDemoSeeder extends Seeder
                 'created_by' => $project->designer_id,
                 'title' => $project->name.' direction',
                 'summary' => 'Warm timber, soft sage walls and daylight toward the garden.',
-                'version' => $project->name === 'Modern Villa Renovation' ? 2 : ($project->status === 'completed' ? 3 : 1),
-                'approved_at' => $project->name === 'Modern Villa Renovation' ? null : ($project->status === 'completed' ? $project->actual_completion_date : now()->subWeek()),
+                'version' => $project->name === 'Lakeview Villa Renovation' ? 2 : ($project->status === 'completed' ? 3 : 1),
+                'approved_at' => $project->name === 'Lakeview Villa Renovation' ? null : ($project->status === 'completed' ? $project->actual_completion_date : now()->subWeek()),
             ]);
 
             foreach ([
@@ -37,7 +37,7 @@ class MoodBoardDemoSeeder extends Seeder
                 ]);
             }
 
-            if ($project->name === 'Modern Villa Renovation') {
+            if ($project->name === 'Lakeview Villa Renovation') {
                 $board->feedback()->create([
                     'user_id' => $homeowner->id,
                     'title' => 'Living Room - Revision 02',

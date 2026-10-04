@@ -21,20 +21,33 @@ class ProfessionalController extends Controller
     }
 
     /**
-     * Profile overview matches the directory card destination (View Profile).
-     * Private contact details stay off this page on purpose.
+     * Profile overview is a single continuous page. Inactive sub-tabs were
+     * removed because they had no working content behind them.
      */
     public function show(User $professional): View
     {
         $profile = $this->publicProfile($professional);
-        $tab = request()->string('tab')->toString() ?: 'overview';
 
         return view('homeowner.professionals.show', [
             'professional' => $professional,
             'profile' => $profile,
-            'tab' => $tab,
             'caseStudies' => $profile->caseStudies,
             'favourite' => $profile->favourites()->where('user_id', auth()->id())->exists(),
+        ]);
+    }
+
+    /**
+     * More Projects is the same profile content with a larger grid, still
+     * without the inactive Overview/Reviews/FAQs strip.
+     */
+    public function portfolio(User $professional): View
+    {
+        $profile = $this->publicProfile($professional);
+
+        return view('homeowner.professionals.portfolio', [
+            'professional' => $professional,
+            'profile' => $profile,
+            'caseStudies' => $profile->caseStudies,
         ]);
     }
 
@@ -52,13 +65,13 @@ class ProfessionalController extends Controller
             'professional' => $professional,
             'profile' => $profile,
             'caseStudy' => $project,
-            'gallery' => collect([$project->hero_image])->merge($project->images->pluck('path'))->unique()->values(),
+            'gallery' => $project->galleryPaths(),
             'more' => $profile->caseStudies
                 ->where('id', '!=', $project->id)
                 ->reject(fn ($item) => $item->category === 'Commercial')
                 ->take(4)
                 ->values(),
-            'testimonial' => $profile->reviews->first(),
+            'testimonial' => $project->client_body ? $project : $profile->reviews->first(),
         ]);
     }
 

@@ -41,6 +41,7 @@ class Project extends Model
         'additional_instructions',
         'renovation_type',
         'property_type',
+        'size_sq_ft',
         'address',
         'city',
         'province',
@@ -54,6 +55,7 @@ class Project extends Model
         'expected_completion_date',
         'actual_completion_date',
         'timeline_notes',
+        'workspace_meta',
         'status',
         'progress',
         'cover_image',
@@ -75,6 +77,8 @@ class Project extends Model
             'expected_completion_date' => 'date',
             'actual_completion_date' => 'date',
             'progress' => 'integer',
+            'size_sq_ft' => 'integer',
+            'workspace_meta' => 'array',
             'designer_id' => 'integer',
             'contractor_id' => 'integer',
         ];
@@ -161,6 +165,44 @@ class Project extends Model
     }
 
     /**
+     * My Projects cards show four workflow stages, not the procurement
+     * row that still exists for older task records.
+     *
+     * @return Collection<int, object{key: string, label: string, percent: int, status: string}>
+     */
+    public function workspaceStages(): Collection
+    {
+        $stored = $this->orderedProgress()->keyBy('stage');
+
+        return collect([
+            'design' => 'Design',
+            'planning' => 'Planning',
+            'construction' => 'Construction',
+            'inspection' => 'Final Inspection',
+        ])->map(function (string $label, string $key) use ($stored) {
+            $row = $stored->get($key);
+            $percent = (int) ($row?->percent ?? 0);
+
+            return (object) [
+                'key' => $key,
+                'label' => $label,
+                'percent' => $percent,
+                'status' => $percent >= 100 ? 'Completed' : ($percent <= 0 ? 'Not Started' : 'In Progress ('.$percent.'%)'),
+            ];
+        })->values();
+    }
+
+    /**
+     * @return Collection<int, ProjectReferenceImage>
+     */
+    public function gallery(): Collection
+    {
+        $images = $this->relationLoaded('referenceImages') ? $this->referenceImages : $this->referenceImages()->get();
+
+        return $images->values();
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function renovationTypes(): array
@@ -225,6 +267,26 @@ class Project extends Model
     public function renovationTypeLabel(): string
     {
         return self::renovationTypes()[$this->renovation_type] ?? $this->renovation_type;
+    }
+
+    /**
+     * Catalogue copy can be more specific than the stored renovation enum
+     * without changing how new projects are created.
+     */
+    public function displayTypeLabel(): string
+    {
+        $meta = $this->workspace_meta ?? [];
+
+        return $meta['type_label'] ?? $this->renovationTypeLabel();
+    }
+
+    /**
+     * My Projects cards follow "City, Sri Lanka" from the reference.
+     * Home still uses locationLabel() so its approved copy is untouched.
+     */
+    public function cataloguePlaceLabel(): string
+    {
+        return $this->city ? $this->city.', Sri Lanka' : ($this->locationLabel() ?: 'Location not added yet');
     }
 
     public function propertyTypeLabel(): string

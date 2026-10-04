@@ -193,8 +193,9 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertSee('Modern Villa Renovation')
             ->assertSee('Outdoor Living Extension')
             ->assertSee('Total Project Value')
-            ->assertSee('+ Create Project')
-            ->assertSee('Homeowner');
+            ->assertSee('+ Create New Project')
+            ->assertSee('Homeowner')
+            ->assertDontSee('Search projects');
 
         $this->actingAs($homeowner)
             ->get(route('homeowner.projects.index', ['status' => 'completed']))
@@ -203,7 +204,7 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertDontSee('Outdoor Living Extension');
 
         $this->actingAs($homeowner)
-            ->get(route('homeowner.projects.index', ['search' => 'Outdoor']))
+            ->get(route('homeowner.projects.index', ['status' => 'ongoing']))
             ->assertOk()
             ->assertSee('Outdoor Living Extension')
             ->assertDontSee('Modern Villa Renovation');
@@ -315,14 +316,16 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertOk()
             ->assertSee('Find Trusted Professionals')
             ->assertSee('Amaya Senarath')
-            ->assertSee('View Portfolio')
-            ->assertDontSee('View Profile');
+            ->assertSee('View Profile')
+            ->assertDontSee('View Portfolio');
 
         $this->actingAs($homeowner)
             ->get(route('homeowner.professionals.show', $designer))
             ->assertOk()
             ->assertSee('Amaya Senarath')
-            ->assertSee('Project Portfolio');
+            ->assertSee('About Me')
+            ->assertSee('Project Portfolio')
+            ->assertDontSee('Availability');
 
         $this->actingAs($homeowner)
             ->get(route('homeowner.professionals.project', [$designer, $case->slug]))

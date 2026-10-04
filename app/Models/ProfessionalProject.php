@@ -24,6 +24,12 @@ class ProfessionalProject extends Model
         'overview',
         'highlights',
         'process',
+        'mood_board',
+        'materials',
+        'client_name',
+        'client_location',
+        'client_rating',
+        'client_body',
         'hero_image',
         'featured',
         'sort_order',
@@ -37,6 +43,9 @@ class ProfessionalProject extends Model
             'completed_on' => 'date',
             'highlights' => 'array',
             'process' => 'array',
+            'mood_board' => 'array',
+            'materials' => 'array',
+            'client_rating' => 'decimal:1',
             'featured' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -69,5 +78,20 @@ class ProfessionalProject extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Hero plus gallery rows, de-duplicated, so a project always has
+     * at least the five stored photographs when they exist.
+     *
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    public function galleryPaths(): \Illuminate\Support\Collection
+    {
+        return collect([$this->hero_image])
+            ->merge($this->images->pluck('path'))
+            ->filter()
+            ->unique()
+            ->values();
     }
 }

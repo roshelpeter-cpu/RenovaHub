@@ -21,8 +21,8 @@ class MessageDemoSeeder extends Seeder
             ]);
         }
 
-        $family = $homeowner->projects()->where('name', 'Modern Family Home Renovation')->firstOrFail();
-        $outdoor = $homeowner->projects()->where('name', 'Outdoor Living Extension')->firstOrFail();
+        $family = $homeowner->projects()->where('name', 'Family Home Extension')->firstOrFail();
+        $outdoor = $homeowner->projects()->where('name', 'Apartment Interior Makeover')->firstOrFail();
 
         foreach ([
             [$family, $family->designer_id, 'I have updated the kitchen island tone. Please have a look.'],

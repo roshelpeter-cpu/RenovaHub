@@ -35,67 +35,15 @@ class ProjectController extends Controller
      * My Projects is a browsing catalogue, not another dashboard.
      * Counts come from every owned project so filters never fake the summary tiles.
      */
-    public function index(Request $request): View
+    public function index(Request $request, ProjectService $projects): View
     {
         Gate::authorize('viewAny', Project::class);
 
-        $status = $request->string('status')->toString();
-        $filtering = array_key_exists($status, Project::statuses());
-        $search = trim($request->string('search')->toString());
-        $type = $request->string('type')->toString();
-        $sort = $request->string('sort')->toString();
-        $sorts = ['newest', 'oldest', 'budget_high', 'budget_low', 'progress', 'budget'];
-
-        $owned = $request->user()->projects();
-        $summary = [
-            'total' => (clone $owned)->count(),
-            'in_progress' => (clone $owned)->where('status', Project::STATUS_IN_PROGRESS)->count(),
-            'planning' => (clone $owned)->where('status', Project::STATUS_PLANNING)->count(),
-            'completed' => (clone $owned)->where('status', Project::STATUS_COMPLETED)->count(),
-            'value' => (float) (clone $owned)->sum('estimated_budget'),
-        ];
-
-        $projects = $request->user()
-            ->projects()
-            ->with(['designer.professionalProfile', 'contractor.professionalProfile'])
-            ->when($filtering, fn ($query) => $query->where('status', $status))
-            ->when(array_key_exists($type, Project::renovationTypes()), fn ($query) => $query->where('renovation_type', $type))
-            ->when($search !== '', function ($query) use ($search) {
-                $term = '%'.addcslashes($search, '%_\\').'%';
-                $typeKeys = collect(Project::renovationTypes())
-                    ->filter(fn (string $label) => str_contains(strtolower($label), strtolower($search)))
-                    ->keys();
-                $query->where(function ($inner) use ($term, $typeKeys) {
-                    $inner->where('name', 'like', $term)
-                        ->orWhere('city', 'like', $term)
-                        ->orWhere('province', 'like', $term)
-                        ->orWhere('address', 'like', $term)
-                        ->orWhere('description', 'like', $term)
-                        ->orWhere('renovation_type', 'like', $term)
-                        ->orWhereIn('renovation_type', $typeKeys);
-                });
-            })
-            ->when($sort === 'oldest', fn ($query) => $query->oldest())
-            ->when($sort === 'progress', fn ($query) => $query->orderByDesc('progress'))
-            ->when(in_array($sort, ['budget', 'budget_high'], true), fn ($query) => $query->orderByDesc('estimated_budget'))
-            ->when($sort === 'budget_low', fn ($query) => $query->orderBy('estimated_budget'))
-            ->when(! in_array($sort, ['oldest', 'progress', 'budget', 'budget_high', 'budget_low'], true), fn ($query) => $query->latest())
-            ->paginate(12)
-            ->withQueryString();
-
-        $projects->getCollection()->each(function (Project $project) {
-            $project->designer?->professionalProfile?->setRelation('user', $project->designer);
-            $project->contractor?->professionalProfile?->setRelation('user', $project->contractor);
-        });
-
-        return view('homeowner.projects.index', [
-            'projects' => $projects,
-            'summary' => $summary,
-            'status' => $filtering ? $status : 'all',
-            'search' => $search,
-            'type' => array_key_exists($type, Project::renovationTypes()) ? $type : null,
-            'sort' => in_array($sort, $sorts, true) ? ($sort === 'budget' ? 'budget_high' : $sort) : 'newest',
-        ]);
+        return view('homeowner.projects.index', $projects->catalogue(
+            $request->user(),
+            $request->string('status')->toString(),
+            $request->string('sort')->toString(),
+        ));
     }
 
     public function create(): View
@@ -130,6 +78,7 @@ class ProjectController extends Controller
 
         $tab = $request->string('tab')->toString();
         $tabRoutes = [
+            'design-process' => null,
             'tasks' => 'homeowner.projects.tasks',
             'documents' => 'homeowner.projects.documents',
             'mood-board' => 'homeowner.projects.mood-board',
@@ -139,7 +88,7 @@ class ProjectController extends Controller
             'messages' => 'homeowner.projects.messages',
         ];
 
-        if (isset($tabRoutes[$tab])) {
+        if (isset($tabRoutes[$tab]) && $tabRoutes[$tab] !== null) {
             return redirect()->route($tabRoutes[$tab], $project);
         }
 
@@ -152,6 +101,7 @@ class ProjectController extends Controller
             'quotations',
             'payments',
             'activity.user',
+            'referenceImages',
         ]);
 
         foreach (['designer', 'contractor'] as $role) {
@@ -161,6 +111,7 @@ class ProjectController extends Controller
 
         return view('homeowner.projects.show', [
             'project' => $project,
+            'section' => in_array($tab, ['design-process'], true) ? $tab : 'overview',
         ]);
     }
 

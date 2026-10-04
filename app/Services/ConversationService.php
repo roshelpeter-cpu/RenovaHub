@@ -117,7 +117,8 @@ class ConversationService
 
     public function projectFor(User $homeowner): ?Project
     {
-        return $homeowner->projects()->where('name', 'Modern Villa Renovation')->first()
+        return $homeowner->projects()->where('name', 'Lakeview Villa Renovation')->first()
+            ?? $homeowner->projects()->where('name', 'Modern Villa Renovation')->first()
             ?? $homeowner->projects()->latest()->first();
     }
 }

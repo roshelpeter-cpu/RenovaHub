@@ -19,7 +19,8 @@ class ConversationDemoSeeder extends Seeder
     public function run(): void
     {
         $homeowner = User::query()->where('email', 'homeowner@test.com')->firstOrFail();
-        $villa = $homeowner->projects()->where('name', 'Modern Villa Renovation')->first();
+        $villa = $homeowner->projects()->where('name', 'Lakeview Villa Renovation')->first()
+            ?? $homeowner->projects()->where('name', 'Modern Villa Renovation')->first();
 
         $support = User::query()->updateOrCreate(
             ['email' => 'support@renovahub.test'],

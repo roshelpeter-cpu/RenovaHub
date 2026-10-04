@@ -43,6 +43,7 @@ Route::middleware([
             ->name('sections.show');
 
         Route::get('professionals/{professional}', [ProfessionalController::class, 'show'])->name('professionals.show');
+        Route::get('professionals/{professional}/portfolio', [ProfessionalController::class, 'portfolio'])->name('professionals.portfolio');
         Route::get('professionals/{professional}/projects/{caseStudy}', [ProfessionalController::class, 'project'])->name('professionals.project');
         Route::post('professionals/{professional}/favourite', [ProfessionalController::class, 'favourite'])->name('professionals.favourite');
         Route::post('professionals/{professional}/contact', [ProfessionalController::class, 'contact'])->name('professionals.contact');

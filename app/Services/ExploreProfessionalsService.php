@@ -21,7 +21,7 @@ class ExploreProfessionalsService
         $query = ProfessionalProfile::query()
             ->where('listed', true)
             ->where('professional_type', $role)
-            ->with(['user', 'portfolioItems', 'caseStudies']);
+            ->with(['user', 'portfolioItems', 'caseStudies.images']);
 
         if ($search !== '') {
             $term = '%'.addcslashes($search, '%_\\').'%';
@@ -70,7 +70,8 @@ class ExploreProfessionalsService
 
         return [
             'featured' => $profiles->where('featured', true)->take(4)->values(),
-            'all' => $profiles->where('featured', false)->values(),
+            // All includes featured profiles so the grid can show six or more cards.
+            'all' => $profiles->values(),
             'favouriteIds' => $favouriteIds,
             'locations' => ProfessionalProfile::query()->where('listed', true)->whereNotNull('location')->distinct()->orderBy('location')->pluck('location'),
         ];

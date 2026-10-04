@@ -16,11 +16,11 @@ class ChangeRequestDemoSeeder extends Seeder
             $project->changeRequests()->delete();
         }
 
-        $this->change($homeowner, 'Modern Villa Renovation', 'Countertop material change', ChangeRequest::STATUS_AWAITING_APPROVAL, 140000, 'Adds about one week');
-        $this->change($homeowner, 'Luxury Kitchen Transformation', 'Change the tap finish', 'implemented', 18000, 'None');
-        $this->change($homeowner, 'Contemporary Bathroom Upgrade', 'Larger mirror', 'implemented', 22000, 'None');
-        $this->change($homeowner, 'Modern Family Home Renovation', 'Add extra wardrobe lighting', 'implemented', 45000, 'None');
-        $this->change($homeowner, 'Outdoor Living Extension', 'Extend the timber screen by one bay', 'implemented', 60000, 'None');
+        $this->change($homeowner, 'Lakeview Villa Renovation', 'Countertop material change', ChangeRequest::STATUS_AWAITING_APPROVAL, 140000, 'Adds about one week');
+        $this->change($homeowner, 'Family Home Extension', 'Change the tap finish', 'implemented', 18000, 'None');
+        $this->change($homeowner, 'Modern Villa Renovation', 'Larger mirror', 'implemented', 22000, 'None');
+        $this->change($homeowner, 'Family Home Extension', 'Add extra wardrobe lighting', 'implemented', 45000, 'None');
+        $this->change($homeowner, 'Apartment Interior Makeover', 'Extend the timber screen by one bay', 'implemented', 60000, 'None');
     }
 
     private function change(User $homeowner, string $projectName, string $title, string $status, ?float $cost, ?string $time): void
