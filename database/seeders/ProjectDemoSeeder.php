@@ -39,39 +39,53 @@ class ProjectDemoSeeder extends Seeder
                     'stage_details' => 'Construction is underway on the kitchen, bathrooms, pool deck and primary suite. Design and planning packages are approved and inspections will follow practical completion.',
                     'activities' => ['Kitchen carcass installation', 'Bathroom waterproofing', 'Pool tiling and coping', 'Deck framing and railing', 'Smart-home first fix'],
                     'stages' => [
-                        'planning' => ['dates' => 'May 2026 – Jun 2026'],
-                        'design' => ['dates' => 'May 2026 – Jun 2026'],
-                        'construction' => ['dates' => 'May 2026 – Nov 2026'],
-                        'inspection' => ['dates' => 'Not started'],
+                        'design' => ['from' => '2026-01-12', 'to' => '2026-02-28'],
+                        'planning' => ['from' => '2026-03-01', 'to' => '2026-04-30'],
+                        'construction' => ['from' => '2026-05-01', 'to' => '2026-11-30'],
+                        'inspection' => ['from' => '2026-12-01', 'to' => '2026-12-15'],
                     ],
                 ],
             ],
             [
                 'Apartment Interior Makeover',
-                'Interior renovation of a luxury apartment focusing on minimalist layouts, space optimisation and smart-home features.',
-                'A compact Colombo apartment is being reworked into an open living kitchen, a calmer bedroom and a guest bath that can also serve visitors. Storage is built into every threshold so the floor stays clear.',
-                'living_room', 'apartment', 1450, '21 Flower Road', 'Colombo', '00700', 'in_progress', 35, 18000000, 6200000, '2026-04-01', '2027-02-28', null, 'images/renova/about-interior.jpg', $sithumi, $kavinda, 2,
-                ['design' => 100, 'planning' => 70, 'procurement' => 35, 'construction' => 20, 'inspection' => 0],
+                'A modern interior makeover for a 3-bedroom apartment focusing on open-plan living, a contemporary kitchen, upgraded bathrooms, custom storage and modern lighting.',
+                'This apartment interior makeover focuses on creating a modern, functional living space with better storage, improved lighting and a contemporary design language.',
+                'living_room', 'apartment', 1450, '21 Flower Road', 'Colombo 07', '00700', 'in_progress', 45, 12500000, 12500000, '2026-01-05', '2026-06-15', null, 'images/renova/about-interior.jpg', $sithumi, $kavinda, 2,
+                ['design' => 100, 'planning' => 100, 'procurement' => 40, 'construction' => 45, 'inspection' => 0],
                 [
                     'type_label' => 'Apartment Renovation',
-                    'overview' => 'The apartment makeover concentrates on light, storage and a quiet material palette. Joinery is being fabricated off-site while the wet rooms are stripped.',
-                    'stage_details' => 'Planning drawings are in review with the building management. Site work has started in the kitchen only.',
-                    'activities' => ['Joinery shop drawings', 'Kitchen demolition', 'Electrical re-route', 'Window film and shading'],
+                    'renovation_label' => 'Interior Makeover',
+                    'property_label' => 'Apartment',
+                    'bedrooms' => 3,
+                    'bathrooms' => 2,
+                    'progress_note' => 'On track',
+                    'overview' => 'This apartment interior makeover focuses on creating a modern, functional living space with better storage, improved lighting and a contemporary design language. The project includes an open-plan living and dining area, a modern kitchen with custom cabinetry, upgraded bathrooms and enhanced interior finishes.',
                     'stages' => [
-                        'planning' => ['dates' => 'Apr 2026 – Jul 2026'],
-                        'design' => ['dates' => 'Apr 2026 – Jun 2026'],
-                        'construction' => ['dates' => 'Jul 2026 – Jan 2027'],
-                        'inspection' => ['dates' => 'Not started'],
+                        'design' => ['from' => '2026-01-05', 'to' => '2026-02-15', 'notes' => 'Design concepts and initial plans finalised'],
+                        'planning' => ['from' => '2026-02-15', 'to' => '2026-03-31', 'notes' => 'Detailed planning and material selection'],
+                        'construction' => ['from' => '2026-04-01', 'to' => '2026-05-31', 'notes' => 'Structural work, interior works and installations'],
+                        'inspection' => ['from' => '2026-06-01', 'to' => '2026-06-15', 'notes' => 'Quality inspection and project handover'],
                     ],
                 ],
             ],
             [
-                'Modern Villa Renovation',
-                'A complete interior and exterior renovation including living spaces, bedrooms and kitchen improvements.',
-                'The older Colombo villa was opened into a single living landscape with a new kitchen, bathrooms and a quieter garden edge.',
-                'full_house', 'villa', 2800, '18 Horton Place', 'Colombo', '00700', 'completed', 100, 28500000, 28500000, '2024-06-01', '2025-03-20', '2025-03-18', 'images/renova/feature-collab.jpg', $amaya, $lanka, 4,
+                'Green Valley Residence',
+                'A complete renovation of a two-storey family residence, transforming the existing structure into a modern and functional living space with open-plan interiors, upgraded kitchen and bathrooms, custom cabinetry and landscaped outdoor areas.',
+                'Green Valley Residence was a full residential renovation focused on modernising the existing property while maintaining its original character.',
+                'full_house', 'house', 2800, '18 Horton Place', 'Colombo', '00700', 'completed', 100, 4500000, 4700000, '2025-06-05', '2025-12-18', '2025-12-18', 'images/renova/feature-collab.jpg', $amaya, $lanka, 4,
                 ['design' => 100, 'planning' => 100, 'procurement' => 100, 'construction' => 100, 'inspection' => 100],
-                ['type_label' => 'Full Home Renovation', 'overview' => 'Handover is complete. The family now uses the courtyard as the main evening room.'],
+                [
+                    'type_label' => 'Residential Renovation',
+                    'renovation_label' => 'Full Renovation',
+                    'property_label' => 'Residential',
+                    'bedrooms' => 3,
+                    'bathrooms' => 2,
+                    'status_note' => 'Handover finished',
+                    'final_cost' => 4850000,
+                    'budget_locked' => true,
+                    'overview' => 'Green Valley Residence was a full residential renovation focused on modernising the existing property while maintaining its original character. The project included an open-plan living and dining area, a modern kitchen with custom cabinetry, upgraded bathrooms, new flooring, lighting enhancements, and landscaped outdoor spaces with a swimming pool.',
+                    'review' => ['name' => 'Roshel Peter', 'rating' => 5.0, 'body' => 'The house feels new without losing its character. Joinery, stone and the garden edge all landed as drawn.'],
+                ],
             ],
             [
                 'Family Home Extension',
@@ -79,7 +93,7 @@ class ProjectDemoSeeder extends Seeder
                 'The extension sits beside the original house rather than above it, keeping the roof line calm and the garden continuous.',
                 'outdoor', 'house', 2100, '8 Hill Street', 'Kandy', '20000', 'completed', 100, 12000000, 12000000, '2024-04-01', '2025-01-30', '2025-01-22', 'images/renova/feature-green.jpg', $imara, $fine, 1,
                 ['design' => 100, 'planning' => 100, 'procurement' => 100, 'construction' => 100, 'inspection' => 100],
-                ['type_label' => 'Home Extension', 'overview' => 'The new wing is occupied. Landscaping has matured through one monsoon season.'],
+                ['type_label' => 'Home Extension', 'overview' => 'The new wing is occupied. Landscaping has matured through one monsoon season.', 'review' => ['name' => 'Roshel Peter', 'rating' => 4.8, 'body' => 'The extension sits quietly beside the original house. Guests use the lounge every weekend.']],
             ],
             [
                 'Commercial Office Renovation',
@@ -87,7 +101,7 @@ class ProjectDemoSeeder extends Seeder
                 'The floor plate was opened for daylight, with enclosed rooms pulled to the core and a café along the street elevation.',
                 'other', 'commercial', 8600, '45 Dharmapala Mawatha', 'Colombo 07', '00700', 'completed', 100, 42000000, 41200000, '2023-11-01', '2024-09-15', '2024-09-12', 'images/renova/feature-progress.jpg', $sithumi, $harbor, 3,
                 ['design' => 100, 'planning' => 100, 'procurement' => 100, 'construction' => 100, 'inspection' => 100],
-                ['type_label' => 'Commercial Office Renovation', 'overview' => 'The office has been occupied since September 2024. Defects liability is closed.'],
+                ['type_label' => 'Commercial Office Renovation', 'overview' => 'The office has been occupied since September 2024. Defects liability is closed.', 'review' => ['name' => 'Roshel Peter', 'rating' => 4.7, 'body' => 'Daylight across the floor plate and a café that staff actually use. Acoustics in the meeting suite are excellent.']],
             ],
         ];
 
@@ -118,6 +132,7 @@ class ProjectDemoSeeder extends Seeder
                     'expected_completion_date' => $end,
                     'actual_completion_date' => $finished,
                     'cover_image' => $image,
+                    'final_cost' => $meta['final_cost'] ?? null,
                     'designer_id' => $designer->id,
                     'contractor_id' => $contractor->id,
                     'workspace_meta' => $meta,
@@ -127,7 +142,8 @@ class ProjectDemoSeeder extends Seeder
             $this->invite($project, $designer, 'designer');
             $this->invite($project, $contractor, 'contractor');
             $this->stages($project, $stages);
-            $this->gallery($project, $galleryOffset);
+            $this->gallery($project);
+            $this->budget($project);
             $this->tasks($project, $designer, $contractor, $status === Project::STATUS_COMPLETED);
             $this->milestones($project, $status === Project::STATUS_COMPLETED, $end);
         }
@@ -136,32 +152,146 @@ class ProjectDemoSeeder extends Seeder
     /**
      * @return list<string>
      */
-    private function photos(): array
+    private function photosFor(Project $project): array
     {
-        return [
-            'images/renova/about-interior.jpg',
-            'images/renova/about-exterior.jpg',
-            'images/renova/feature-collab.jpg',
-            'images/renova/feature-progress.jpg',
-            'images/renova/feature-green.jpg',
-            'images/renova/feature-docs.jpg',
-            'images/renova/feature-plans.jpg',
-            'images/renova/feature-tasks.jpg',
-            'images/renova/auth-register.jpg',
-            'images/renova/hero.jpg',
-        ];
+        return match ($project->name) {
+            'Lakeview Villa Renovation' => [
+                'images/renova/about-exterior.jpg',
+                'images/renova/hero.jpg',
+                'images/renova/feature-green.jpg',
+                'images/renova/about-interior.jpg',
+                'images/renova/feature-plans.jpg',
+                'images/renova/auth-login.jpg',
+            ],
+            'Apartment Interior Makeover' => [
+                'images/renova/about-interior.jpg',
+                'images/renova/feature-collab.jpg',
+                'images/renova/auth-register.jpg',
+                'images/renova/feature-notes.jpg',
+                'images/renova/feature-tasks.jpg',
+                'images/renova/feature-plans.jpg',
+            ],
+            'Green Valley Residence' => [
+                'images/renova/feature-collab.jpg',
+                'images/renova/feature-quotes.jpg',
+                'images/renova/feature-docs.jpg',
+                'images/renova/hero.jpg',
+                'images/renova/feature-green.jpg',
+                'images/renova/about-interior.jpg',
+            ],
+            'Family Home Extension' => [
+                'images/renova/feature-green.jpg',
+                'images/renova/feature-changes.jpg',
+                'images/renova/about-exterior.jpg',
+                'images/renova/feature-plans.jpg',
+                'images/renova/feature-progress.jpg',
+            ],
+            'Commercial Office Renovation' => [
+                'images/renova/feature-progress.jpg',
+                'images/renova/feature-docs.jpg',
+                'images/renova/feature-quotes.jpg',
+                'images/renova/feature-tasks.jpg',
+                'images/renova/auth-register.jpg',
+                'images/renova/feature-notes.jpg',
+                'images/renova/feature-collab.jpg',
+            ],
+            default => [
+                'images/renova/about-interior.jpg',
+                'images/renova/about-exterior.jpg',
+                'images/renova/feature-collab.jpg',
+                'images/renova/feature-progress.jpg',
+                'images/renova/feature-green.jpg',
+            ],
+        };
     }
 
-    private function gallery(Project $project, int $offset): void
+    private function gallery(Project $project): void
     {
         $project->referenceImages()->delete();
-        $photos = $this->photos();
+        $photos = $this->photosFor($project);
+        $project->update(['cover_image' => $photos[0]]);
 
-        for ($i = 0; $i < 5; $i++) {
-            $path = $photos[($offset + $i) % count($photos)];
+        foreach ($photos as $path) {
             $project->referenceImages()->create([
                 'path' => $path,
                 'original_name' => basename($path),
+            ]);
+        }
+    }
+
+    /**
+     * Category rows always sum to estimated_budget so the breakdown cannot drift from the tile.
+     *
+     * @return list<array{0: string, 1: float}>
+     */
+    private function budgetRows(Project $project): array
+    {
+        $total = (float) $project->estimated_budget;
+
+        return match ($project->name) {
+            'Lakeview Villa Renovation' => [
+                ['Design & Consultancy', 2500000],
+                ['Structural work', 8000000],
+                ['Electrical & plumbing', 3500000],
+                ['Materials', 6000000],
+                ['Furniture & fixtures', 3000000],
+                ['Landscaping', 3500000],
+                ['Contingency', 2000000],
+            ],
+            'Apartment Interior Makeover' => [
+                ['Design & Planning', 1500000, 100],
+                ['Materials', 4000000, 40],
+                ['Construction & Labour', 5500000, 30],
+                ['Fixtures & Furniture', 1000000, 0],
+                ['Contingency', 500000, 0],
+            ],
+            'Green Valley Residence' => [
+                ['Design & Professional Services', 450000, 100],
+                ['Materials', 1650000, 100],
+                ['Construction & Labour', 1850000, 100],
+                ['Fixtures & Furniture', 500000, 100],
+                ['Additional Changes', 250000, 100],
+            ],
+            'Family Home Extension' => [
+                ['Design & Consultancy', 900000],
+                ['Construction', 5200000],
+                ['Electrical & plumbing', 1600000],
+                ['Materials', 2500000],
+                ['Furniture', 800000],
+                ['Landscaping', 700000],
+                ['Contingency', 300000],
+            ],
+            'Commercial Office Renovation' => [
+                ['Architectural / design', 3200000],
+                ['Construction', 14000000],
+                ['Electrical', 4800000],
+                ['HVAC', 5200000],
+                ['Furniture', 6100000],
+                ['Acoustic treatment', 2700000],
+                ['IT infrastructure', 3500000],
+                ['Contingency', 2500000],
+            ],
+            default => [['Works', $total]],
+        };
+    }
+
+    private function budget(Project $project): void
+    {
+        $project->budgetItems()->delete();
+        $rows = $this->budgetRows($project);
+        $assigned = array_sum(array_column($rows, 1));
+        $target = (float) $project->estimated_budget;
+        $locked = (bool) ($project->workspace_meta['budget_locked'] ?? false);
+        if (! $locked && abs($assigned - $target) > 0.5 && $rows !== []) {
+            $rows[count($rows) - 1][1] += $target - $assigned;
+        }
+
+        foreach ($rows as $order => $row) {
+            $project->budgetItems()->create([
+                'category' => $row[0],
+                'amount' => $row[1],
+                'spent_percent' => $row[2] ?? ($project->status === Project::STATUS_COMPLETED ? 100 : 0),
+                'sort_order' => $order,
             ]);
         }
     }
@@ -183,50 +313,154 @@ class ProjectDemoSeeder extends Seeder
     private function stages(Project $project, array $values): void
     {
         $project->progressStages()->delete();
+        $dates = $project->workspace_meta['stages'] ?? [];
         foreach ($values as $stage => $percent) {
-            $project->progressStages()->create(['stage' => $stage, 'percent' => $percent]);
+            $project->progressStages()->create([
+                'stage' => $stage,
+                'percent' => $percent,
+                'started_on' => $dates[$stage]['from'] ?? null,
+                'ended_on' => $dates[$stage]['to'] ?? null,
+                'notes' => $dates[$stage]['notes'] ?? null,
+            ]);
         }
     }
 
     private function tasks(Project $project, User $designer, User $contractor, bool $complete): void
     {
         $project->tasks()->delete();
-        $rows = $complete
-            ? [
-                ['Design concept approved', 'design', 'completed', 'high', $designer->id, 100],
-                ['Planning package issued', 'planning', 'completed', 'normal', $designer->id, 100],
-                ['Construction completed', 'construction', 'completed', 'high', $contractor->id, 100],
-                ['Final inspection signed off', 'inspection', 'completed', 'high', $contractor->id, 100],
-            ]
-            : [
-                ['Design concept approved', 'design', 'completed', 'high', $designer->id, 100],
-                ['Planning package issued', 'planning', 'completed', 'normal', $designer->id, 100],
-                ['Kitchen installation', 'construction', 'in_progress', 'high', $contractor->id, $project->progress],
-                ['Final inspection', 'inspection', 'pending', 'normal', $contractor->id, 0],
-            ];
+        $rows = $this->taskRows($project, $designer, $contractor, $complete);
 
-        foreach ($rows as [$name, $category, $status, $priority, $assignee, $percent]) {
-            $project->tasks()->create([
-                'name' => $name,
-                'description' => $name.' for '.$project->name.'.',
-                'category' => $category,
-                'status' => $status,
-                'priority' => $priority,
-                'assignee_id' => $assignee,
-                'progress' => $percent,
-                'due_on' => $project->expected_completion_date,
-            ]);
+        foreach ($rows as $row) {
+            $project->tasks()->create($row);
         }
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function taskRows(Project $project, User $designer, User $contractor, bool $complete): array
+    {
+        if ($project->name === 'Apartment Interior Makeover') {
+            return [
+                $this->task('Install kitchen cabinets', 'Cabinet installation for the open kitchen.', 'construction', 'in_progress', $contractor->id, 60, '2026-04-05', '2026-04-20'),
+                $this->task('Interior painting', 'Paint the living, dining and bedroom walls.', 'interior', 'pending', $contractor->id, 0, '2026-10-10', '2026-11-20'),
+            ];
+        }
+
+        if ($project->name === 'Lakeview Villa Renovation') {
+            return [
+                $this->task('Pool deck preparation', 'Prepare the pool surround before tiling.', 'construction', 'in_progress', $contractor->id, 40, '2026-05-01', '2026-06-15'),
+                $this->task('Outdoor lighting', 'Install landscape and deck lighting.', 'construction', 'pending', $designer->id, 0, '2026-03-01', '2026-04-01'),
+            ];
+        }
+
+        if ($project->name === 'Green Valley Residence') {
+            return [
+                $this->task('Finalise architectural drawings', 'Issue the approved drawing set.', 'design', 'completed', $designer->id, 100, '2025-06-01', '2025-06-15'),
+                $this->task('Approve kitchen design', 'Sign off the kitchen layout and finishes.', 'design', 'completed', $designer->id, 100, '2025-06-16', '2025-06-30'),
+                $this->task('Order flooring materials', 'Confirm timber and tile orders.', 'materials', 'completed', $contractor->id, 100, '2025-07-01', '2025-07-20'),
+                $this->task('Complete electrical installation', 'Finish first and second fix electrical.', 'construction', 'completed', $contractor->id, 100, '2025-08-01', '2025-09-15'),
+                $this->task('Install kitchen cabinets', 'Fit and adjust the kitchen joinery.', 'construction', 'completed', $contractor->id, 100, '2025-09-20', '2025-10-15'),
+                $this->task('Complete painting', 'Apply the final paint system.', 'interior', 'completed', $contractor->id, 100, '2025-10-16', '2025-11-10'),
+                $this->task('Final inspection', 'Walk the house and close defects.', 'inspection', 'completed', $contractor->id, 100, '2025-12-01', '2025-12-12'),
+                $this->task('Handover', 'Hand the residence to the homeowner.', 'inspection', 'completed', $designer->id, 100, '2025-12-13', '2025-12-18'),
+            ];
+        }
+
+        $base = $project->expected_start_date?->toDateString() ?? '2024-06-01';
+        $end = $project->actual_completion_date?->toDateString() ?? $project->expected_completion_date?->toDateString() ?? '2025-03-01';
+
+        return [
+            $this->task('Finalise architectural drawings', 'Approved drawings for '.$project->name.'.', 'design', 'completed', $designer->id, 100, $base, $base),
+            $this->task('Approve kitchen design', 'Kitchen sign-off for '.$project->name.'.', 'design', 'completed', $designer->id, 100, $base, $end),
+            $this->task('Order flooring materials', 'Material order for '.$project->name.'.', 'procurement', 'completed', $contractor->id, 100, $base, $end),
+            $this->task('Complete electrical installation', 'Electrical installation for '.$project->name.'.', 'construction', 'completed', $contractor->id, 100, $base, $end),
+            $this->task('Install kitchen cabinets', 'Joinery installation for '.$project->name.'.', 'construction', 'completed', $contractor->id, 100, $base, $end),
+            $this->task('Complete painting', 'Decoration for '.$project->name.'.', 'interior', 'completed', $contractor->id, 100, $base, $end),
+            $this->task('Final inspection', 'Inspection for '.$project->name.'.', 'inspection', 'completed', $contractor->id, 100, $base, $end),
+            $this->task('Handover', 'Handover for '.$project->name.'.', 'inspection', 'completed', $designer->id, 100, $base, $end),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function task(string $name, string $description, string $category, string $status, int $assigneeId, int $progress, string $started, string $due): array
+    {
+        return [
+            'name' => $name,
+            'description' => $description,
+            'category' => $category,
+            'status' => $status,
+            'priority' => 'normal',
+            'assignee_id' => $assigneeId,
+            'progress' => $progress,
+            'started_on' => $started,
+            'due_on' => $due,
+        ];
     }
 
     private function milestones(Project $project, bool $complete, string $end): void
     {
         $project->milestones()->delete();
-        $project->milestones()->create([
-            'title' => $complete ? 'Practical completion' : 'Next site review',
-            'description' => $complete ? 'The work was handed over.' : 'Review progress on site with the contractor.',
-            'due_on' => $complete ? $project->actual_completion_date : $end,
-            'completed_at' => $complete ? $project->actual_completion_date : null,
-        ]);
+
+        if (! $complete) {
+            $project->milestones()->create([
+                'title' => 'Next site review',
+                'description' => 'Review progress on site with the contractor.',
+                'due_on' => $end,
+                'completed_at' => null,
+            ]);
+
+            return;
+        }
+
+        $rows = $project->name === 'Green Valley Residence'
+            ? [
+                ['Project Created', 'Initial project setup and requirements defined', '2025-06-05'],
+                ['Design Completed', 'Design concepts and plans approved', '2025-07-18'],
+                ['Planning Completed', 'Detailed planning and material selection finalised', '2025-08-02'],
+                ['Procurement Completed', 'All materials and suppliers confirmed', '2025-09-10'],
+                ['Construction Completed', 'Construction and installation work finished', '2025-11-28'],
+                ['Final Inspection', 'Quality inspection and defect resolution', '2025-12-12'],
+                ['Project Completed', 'Handover to homeowner', '2025-12-18'],
+            ]
+            : $this->spreadMilestones($project);
+
+        foreach ($rows as [$title, $description, $date]) {
+            $project->milestones()->create([
+                'title' => $title,
+                'description' => $description,
+                'due_on' => $date,
+                'completed_at' => $date,
+            ]);
+        }
+    }
+
+    /**
+     * @return list<array{0: string, 1: string, 2: string}>
+     */
+    private function spreadMilestones(Project $project): array
+    {
+        $start = $project->expected_start_date ?? now()->subYear();
+        $finish = $project->actual_completion_date ?? $project->expected_completion_date ?? now();
+        $titles = [
+            ['Project Created', 'Initial project setup and requirements defined'],
+            ['Design Completed', 'Design concepts and plans approved'],
+            ['Planning Completed', 'Detailed planning and material selection finalised'],
+            ['Procurement Completed', 'All materials and suppliers confirmed'],
+            ['Construction Completed', 'Construction and installation work finished'],
+            ['Final Inspection', 'Quality inspection and defect resolution'],
+            ['Project Completed', 'Handover to the homeowner'],
+        ];
+        $days = max(1, $start->diffInDays($finish));
+
+        return collect($titles)->values()->map(function (array $row, int $index) use ($start, $days, $titles) {
+            $date = $index === count($titles) - 1
+                ? $start->copy()->addDays($days)
+                : $start->copy()->addDays((int) floor($days * ($index / (count($titles) - 1))));
+
+            return [$row[0], $row[1], $date->toDateString()];
+        })->all();
     }
 }

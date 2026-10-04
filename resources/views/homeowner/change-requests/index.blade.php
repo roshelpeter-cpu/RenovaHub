@@ -19,7 +19,9 @@
                         <h2 class="font-serif text-xl text-forest">{{ $change->title }}</h2>
                         <span class="rounded-full bg-[#e7f0e4] px-3 py-1 text-xs text-forest">{{ $change->statusLabel() }}</span>
                     </div>
-                    <p class="mt-1 text-sm text-mist">{{ $change->project->name }} · {{ ucfirst($change->category) }} · {{ ucfirst($change->priority) }}</p>
+                    <p class="mt-1 text-xs uppercase tracking-[0.12em] text-olive">{{ $change->reference() }} · {{ $change->project->name }}</p>
+                    <p class="mt-2 text-sm text-charcoal">{{ $change->description }}</p>
+                    <p class="mt-2 text-sm text-mist">{{ $change->requester?->name ?? 'Homeowner' }} · {{ $change->created_at->format('j M Y') }}@if ($change->cost_impact !== null) · LKR {{ number_format((float) $change->cost_impact, 0) }}@endif</p>
                 </a>
             @endforeach
         </div>

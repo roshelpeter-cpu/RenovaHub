@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Homeowner;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Homeowner\DocumentIndexRequest;
+use App\Http\Requests\Homeowner\StoreGlobalDocumentRequest;
 use App\Http\Requests\StoreDocumentRequest;
 use App\Models\Document;
 use App\Models\Project;
 use App\Services\ActivityLogService;
+use App\Services\DocumentService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -16,29 +18,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function index(Request $request): View
+    public function index(DocumentIndexRequest $request, DocumentService $documents): View
     {
         Gate::authorize('viewAny', Project::class);
 
-        $category = $request->string('category')->toString();
-        $search = trim($request->string('search')->toString());
-
-        $documents = Document::query()
-            ->whereIn('project_id', $request->user()->projects()->select('id'))
-            ->with(['project', 'uploader'])
-            ->when($category !== '', fn ($query) => $query->where('category', $category))
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where('name', 'like', '%'.addcslashes($search, '%_\\').'%');
-            })
-            ->latest()
-            ->paginate(12)
-            ->withQueryString();
+        $filters = $documents->filters($request->user(), $request->validated());
 
         return view('homeowner.documents.index', [
-            'documents' => $documents,
+            ...$documents->globalIndex($request->user(), $filters),
             'project' => null,
-            'category' => $category,
-            'search' => $search,
         ]);
     }
 
@@ -47,38 +35,64 @@ class DocumentController extends Controller
         Gate::authorize('view', $project);
 
         return view('homeowner.documents.index', [
-            'documents' => $project->documents()->with(['uploader', 'project'])->latest()->paginate(12),
+            'documents' => $project->documents()->with(['uploader.professionalProfile', 'project'])->latest()->paginate(12),
             'project' => $project,
-            'category' => '',
-            'search' => '',
+            'projects' => collect(),
+            'summary' => null,
+            'filters' => ['project' => null, 'type' => '', 'search' => ''],
         ]);
     }
 
-    public function store(StoreDocumentRequest $request, Project $project, ActivityLogService $activity): RedirectResponse
+    public function store(StoreDocumentRequest $request, Project $project, DocumentService $documents, ActivityLogService $activity): RedirectResponse
     {
-        $file = $request->file('file');
-        $path = $file->store('projects/'.$project->id.'/documents', 'local');
-
-        $project->documents()->create([
-            'uploaded_by' => $request->user()->id,
-            'name' => $request->string('name')->toString(),
-            'original_name' => $file->getClientOriginalName(),
-            'category' => $request->string('category')->toString(),
-            'disk' => 'local',
-            'path' => $path,
-            'mime' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-        ]);
+        $documents->storeUpload(
+            $project,
+            $request->user(),
+            $request->file('file'),
+            $request->string('name')->toString(),
+            $request->string('category')->toString(),
+            $request->string('description')->toString() ?: null,
+        );
 
         $activity->record($project, $request->user(), 'document.uploaded', 'A document was uploaded.');
 
         return back()->with('status', 'Document uploaded.');
     }
 
+    /**
+     * Global upload still stores the file on the chosen owned project.
+     * The project id is checked in the form request before this runs.
+     */
+    public function storeGlobal(StoreGlobalDocumentRequest $request, DocumentService $documents, ActivityLogService $activity): RedirectResponse
+    {
+        $project = $request->user()->projects()->findOrFail($request->integer('project_id'));
+
+        $documents->storeUpload(
+            $project,
+            $request->user(),
+            $request->file('file'),
+            $request->string('name')->toString(),
+            $request->string('category')->toString(),
+            $request->string('description')->toString() ?: null,
+        );
+
+        $activity->record($project, $request->user(), 'document.uploaded', 'A document was uploaded.');
+
+        return redirect()
+            ->route('homeowner.documents.index', ['project' => $project->id])
+            ->with('status', 'Document uploaded.');
+    }
+
+    public function show(Project $project, Document $document): StreamedResponse
+    {
+        $this->authorizeDocument($project, $document);
+
+        return Storage::disk($document->disk)->response($document->path, $document->original_name);
+    }
+
     public function download(Project $project, Document $document): StreamedResponse
     {
-        Gate::authorize('view', $document);
-        abort_unless($document->project_id === $project->id, 404);
+        $this->authorizeDocument($project, $document);
 
         return Storage::disk($document->disk)->download($document->path, $document->original_name);
     }
@@ -92,5 +106,16 @@ class DocumentController extends Controller
         $document->delete();
 
         return back()->with('status', 'Document deleted.');
+    }
+
+    /**
+     * View and download both require the document policy and a matching project.
+     * A swapped document id on another project returns 404 instead of the file.
+     */
+    private function authorizeDocument(Project $project, Document $document): void
+    {
+        Gate::authorize('view', $document);
+        abort_unless($document->project_id === $project->id, 404);
+        abort_unless(Storage::disk($document->disk)->exists($document->path), 404);
     }
 }

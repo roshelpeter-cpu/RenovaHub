@@ -84,4 +84,12 @@ class ChangeRequest extends Model
     {
         return str($this->status)->replace('_', ' ')->title()->toString();
     }
+
+    /**
+     * The number is derived from the primary key so it cannot drift from the row.
+     */
+    public function reference(): string
+    {
+        return 'CR-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
 }

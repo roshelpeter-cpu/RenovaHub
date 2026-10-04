@@ -3,54 +3,48 @@
 namespace App\Http\Controllers\Homeowner;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Homeowner\TaskIndexRequest;
 use App\Models\Project;
 use App\Models\ProjectTask;
-use Illuminate\Http\Request;
+use App\Services\TaskService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class TaskController extends Controller
 {
-    public function index(Request $request): View
+    public function index(TaskIndexRequest $request, TaskService $tasks): View
     {
         Gate::authorize('viewAny', Project::class);
 
-        $status = $request->string('status')->toString();
-
-        $tasks = ProjectTask::query()
-            ->whereIn('project_id', $request->user()->projects()->select('id'))
-            ->with(['project', 'assignee'])
-            ->when(in_array($status, ['pending', 'in_progress', 'completed', 'blocked'], true), fn ($query) => $query->where('status', $status))
-            ->latest()
-            ->paginate(12)
-            ->withQueryString();
+        $filters = $tasks->filters($request->user(), $request->validated());
 
         return view('homeowner.tasks.index', [
-            'tasks' => $tasks,
-            'status' => $status,
+            ...$tasks->globalIndex($request->user(), $filters),
             'project' => null,
         ]);
     }
 
-    public function project(Request $request, Project $project): View
+    public function project(Project $project): View
     {
         Gate::authorize('view', $project);
 
-        $tasks = $project->tasks()->with(['assignee', 'project'])->latest()->paginate(12);
-
         return view('homeowner.tasks.index', [
-            'tasks' => $tasks,
+            'tasks' => $project->tasks()->with(['assignee.professionalProfile', 'project'])->orderBy('due_on')->paginate(12),
             'status' => '',
             'project' => $project,
+            'projects' => collect(),
+            'summary' => null,
+            'filters' => ['project' => null, 'status' => '', 'category' => '', 'search' => ''],
         ]);
     }
 
     public function show(Project $project, ProjectTask $task): View
     {
         Gate::authorize('view', $project);
+        Gate::authorize('view', $task);
         abort_unless($task->project_id === $project->id, 404);
 
-        $task->load('assignee');
+        $task->load('assignee.professionalProfile');
 
         return view('homeowner.tasks.show', [
             'project' => $project,

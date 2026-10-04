@@ -1,28 +1,34 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Homeowner;
 
 use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreDocumentRequest extends FormRequest
+class StoreGlobalDocumentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $project = $this->route('project');
+        $user = $this->user();
+        $projectId = (int) $this->input('project_id');
 
-        return $project !== null && ($this->user()?->can('update', $project) ?? false);
+        if ($user === null || ! $user->isHomeowner() || $projectId < 1) {
+            return false;
+        }
+
+        $project = $user->projects()->find($projectId);
+
+        return $project !== null && $user->can('update', $project);
     }
 
     /**
-     * Executables are rejected. Documents stay on the private disk.
-     *
      * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
+            'project_id' => ['required', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'category' => ['required', Rule::in(array_keys(Document::categories()))],

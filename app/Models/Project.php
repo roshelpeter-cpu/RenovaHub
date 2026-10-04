@@ -50,6 +50,7 @@ class Project extends Model
         'longitude',
         'estimated_budget',
         'current_budget',
+        'final_cost',
         'currency',
         'expected_start_date',
         'expected_completion_date',
@@ -73,6 +74,7 @@ class Project extends Model
             'longitude' => 'decimal:7',
             'estimated_budget' => 'decimal:2',
             'current_budget' => 'decimal:2',
+            'final_cost' => 'decimal:2',
             'expected_start_date' => 'date',
             'expected_completion_date' => 'date',
             'actual_completion_date' => 'date',
@@ -164,11 +166,25 @@ class Project extends Model
         return $this->hasMany(ProjectReferenceImage::class);
     }
 
+    public function budgetItems(): HasMany
+    {
+        return $this->hasMany(ProjectBudgetItem::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Gallery alias so controllers can eager-load images without a second table.
+     * Rows still live on project_reference_images.
+     */
+    public function images(): HasMany
+    {
+        return $this->referenceImages();
+    }
+
     /**
      * My Projects cards show four workflow stages, not the procurement
      * row that still exists for older task records.
      *
-     * @return Collection<int, object{key: string, label: string, percent: int, status: string}>
+     * @return Collection<int, object{key: string, label: string, percent: int, status: string, dates: ?string, current: bool}>
      */
     public function workspaceStages(): Collection
     {
@@ -182,14 +198,46 @@ class Project extends Model
         ])->map(function (string $label, string $key) use ($stored) {
             $row = $stored->get($key);
             $percent = (int) ($row?->percent ?? 0);
+            $current = $percent > 0 && $percent < 100;
 
             return (object) [
                 'key' => $key,
                 'label' => $label,
                 'percent' => $percent,
-                'status' => $percent >= 100 ? 'Completed' : ($percent <= 0 ? 'Not Started' : 'In Progress ('.$percent.'%)'),
+                'current' => $current,
+                'dates' => $row instanceof ProjectProgress ? $row->periodLabel() : null,
+                'notes' => $row instanceof ProjectProgress ? $row->notes : null,
+                // Card copy stays "In Progress — 68%". The detail timeline uses state instead.
+                'status' => $percent >= 100 ? 'Completed' : ($percent <= 0 ? 'Not Started' : 'In Progress — '.$percent.'%'),
+                'state' => $percent >= 100 ? 'completed' : ($percent <= 0 ? 'upcoming' : 'current'),
             ];
         })->values();
+    }
+
+    public function currentStageLabel(): string
+    {
+        $current = $this->workspaceStages()->first(fn ($stage) => $stage->current);
+
+        if ($current) {
+            return $current->label;
+        }
+
+        return $this->status === self::STATUS_COMPLETED ? 'Completed' : 'Planning';
+    }
+
+    public function clientReview(): ?object
+    {
+        $review = $this->workspace_meta['review'] ?? null;
+
+        if (! is_array($review) || empty($review['body'])) {
+            return null;
+        }
+
+        return (object) [
+            'name' => $review['name'] ?? 'Client',
+            'rating' => (float) ($review['rating'] ?? 5),
+            'body' => $review['body'],
+        ];
     }
 
     /**
@@ -391,5 +439,133 @@ class Project extends Model
         $stages = $this->relationLoaded('progressStages') ? $this->progressStages : $this->progressStages()->get();
 
         return $stages->sortBy(fn (ProjectProgress $stage) => array_search($stage->stage, self::stageOrder(), true));
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === self::STATUS_COMPLETED;
+    }
+
+    /**
+     * Jan through Jun is six months on the project cards, counting both ends.
+     */
+    public function durationMonths(): ?int
+    {
+        $start = $this->expected_start_date;
+        $end = $this->scheduleEnd();
+
+        if ($start === null || $end === null) {
+            return null;
+        }
+
+        return (($end->year - $start->year) * 12) + ($end->month - $start->month) + 1;
+    }
+
+    public function durationLabel(): ?string
+    {
+        $months = $this->durationMonths();
+
+        if ($months === null) {
+            return null;
+        }
+
+        return $months.' '.($months === 1 ? 'Month' : 'Months');
+    }
+
+    public function durationRangeLabel(): ?string
+    {
+        $start = $this->expected_start_date;
+        $end = $this->scheduleEnd();
+
+        if ($start === null || $end === null) {
+            return null;
+        }
+
+        return $start->format('M Y').' – '.$end->format('M Y');
+    }
+
+    public function scheduleEnd(): ?\Illuminate\Support\Carbon
+    {
+        if ($this->isCompleted()) {
+            return $this->actual_completion_date ?? $this->expected_completion_date;
+        }
+
+        return $this->expected_completion_date;
+    }
+
+    public function approvedBudgetAmount(): float
+    {
+        return (float) ($this->current_budget ?? $this->estimated_budget ?? 0);
+    }
+
+    /**
+     * Completed summary uses the stored final cost when the category lines
+     * were agreed before the last variations.
+     */
+    public function finalCostAmount(): float
+    {
+        if ($this->final_cost !== null) {
+            return (float) $this->final_cost;
+        }
+
+        $items = $this->relationLoaded('budgetItems') ? $this->budgetItems : $this->budgetItems()->get();
+        $sum = (float) $items->sum(fn (ProjectBudgetItem $item) => (float) $item->amount);
+
+        return $sum > 0 ? $sum : $this->approvedBudgetAmount();
+    }
+
+    public function budgetTotalAmount(): float
+    {
+        return (float) ($this->estimated_budget ?? 0);
+    }
+
+    public function amountSpent(): float
+    {
+        $items = $this->relationLoaded('budgetItems') ? $this->budgetItems : $this->budgetItems()->get();
+
+        return (float) $items->sum(fn (ProjectBudgetItem $item) => $item->spentAmount());
+    }
+
+    public function amountRemaining(): float
+    {
+        return max(0, $this->budgetTotalAmount() - $this->amountSpent());
+    }
+
+    public function spentPercent(): int
+    {
+        $total = $this->budgetTotalAmount();
+
+        if ($total <= 0) {
+            return 0;
+        }
+
+        return (int) min(100, round(($this->amountSpent() / $total) * 100));
+    }
+
+    public function metaString(string $key, ?string $fallback = null): ?string
+    {
+        $value = ($this->workspace_meta ?? [])[$key] ?? null;
+
+        return is_scalar($value) && (string) $value !== '' ? (string) $value : $fallback;
+    }
+
+    public function progressCaption(): string
+    {
+        if ($this->isCompleted() || (int) $this->progress >= 100) {
+            return 'Completed successfully';
+        }
+
+        return $this->metaString('progress_note', 'On track') ?? 'On track';
+    }
+
+    /**
+     * Tab badges read counts once. Calling this from the partial avoids
+     * repeating the same four queries on every project section.
+     */
+    public function ensureSectionCounts(): void
+    {
+        if (! array_key_exists('tasks_count', $this->attributes)) {
+            $this->loadCount(['tasks', 'documents', 'quotations', 'changeRequests']);
+        }
     }
 }

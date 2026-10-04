@@ -12,6 +12,7 @@ class Document extends Model
         'project_id',
         'uploaded_by',
         'name',
+        'description',
         'original_name',
         'category',
         'disk',
@@ -48,5 +49,35 @@ class Document extends Model
     public function url(): string
     {
         return Storage::disk($this->disk)->url($this->path);
+    }
+
+    /**
+     * Stored keys stay stable for older uploads. Labels are what the filter shows.
+     *
+     * @return array<string, string>
+     */
+    public static function categories(): array
+    {
+        return [
+            'design' => 'Design',
+            'contracts' => 'Contract',
+            'quotation' => 'Quotation',
+            'invoices' => 'Invoice',
+            'payment' => 'Payment',
+            'materials' => 'Materials',
+            'site_photos' => 'Site Photos',
+            'technical' => 'Technical',
+            'inspection' => 'Inspection',
+            'warranty' => 'Warranty',
+            'floor_plans' => 'Floor Plans',
+            'receipts' => 'Receipts',
+            'construction' => 'Construction',
+            'other' => 'Other',
+        ];
+    }
+
+    public function categoryLabel(): string
+    {
+        return self::categories()[$this->category] ?? str($this->category)->replace('_', ' ')->title()->toString();
     }
 }

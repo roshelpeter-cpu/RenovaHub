@@ -14,7 +14,14 @@
         @endif
     </div>
     @if (! $board)
-        <div class="mt-6">@include('homeowner.partials.empty', ['title' => 'No mood board yet', 'body' => 'The designer has not published a mood board for this project.'])</div>
+        @if ($project->status === \App\Models\Project::STATUS_IN_PROGRESS)
+            <div class="mt-8 max-w-xl rounded-[1.4rem] border border-[#ece7dc] bg-white p-8">
+                <h2 class="font-serif text-2xl text-[#123D2B]">Not yet decided</h2>
+                <p class="mt-2 text-sm leading-relaxed text-[#66756C]">Mood board not yet finalized. The design direction and material selections are still being finalized.</p>
+            </div>
+        @else
+            <div class="mt-6">@include('homeowner.partials.empty', ['title' => 'No mood board yet', 'body' => 'The designer has not published a mood board for this project.'])</div>
+        @endif
     @else
         <p class="mt-4 text-sm text-charcoal">Version {{ $board->version }} · Updated {{ $board->updated_at->format('j M Y') }} · {{ $board->author?->name ?? 'Designer' }} @if($board->approved_at) · Approved {{ $board->approved_at->format('j M Y') }} @endif</p>
         <p class="mt-2 max-w-3xl text-sm leading-relaxed text-mist">{{ $board->summary }}</p>

@@ -23,6 +23,7 @@ class Quotation extends Model
         'contractor_id',
         'number',
         'description',
+        'category',
         'materials',
         'labour',
         'additional_costs',
@@ -31,6 +32,7 @@ class Quotation extends Model
         'total',
         'valid_until',
         'status',
+        'approved_at',
         'notes',
     ];
 
@@ -44,6 +46,7 @@ class Quotation extends Model
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',
             'valid_until' => 'date',
+            'approved_at' => 'datetime',
         ];
     }
 
@@ -64,6 +67,10 @@ class Quotation extends Model
 
     public function statusLabel(): string
     {
+        if (is_string($this->notes) && $this->notes !== '') {
+            return $this->notes;
+        }
+
         return match ($this->status) {
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_REJECTED => 'Rejected',

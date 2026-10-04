@@ -210,6 +210,65 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertDontSee('Modern Villa Renovation');
     }
 
+    public function test_project_detail_uses_owned_gallery_and_hides_removed_tabs(): void
+    {
+        $owner = User::factory()->create(['role' => 'homeowner']);
+        $other = User::factory()->create(['role' => 'homeowner']);
+        $designer = User::factory()->create(['role' => 'designer', 'name' => 'Amaya Senarath']);
+        $designer->professionalProfile()->create([
+            'professional_type' => 'designer',
+            'title' => 'Interior Designer',
+            'bio' => 'Interior designer for the Lakeview villa.',
+            'listed' => true,
+            'location' => 'Colombo',
+        ]);
+        $project = Project::factory()->for($owner, 'homeowner')->create([
+            'name' => 'Lakeview Villa Renovation',
+            'status' => Project::STATUS_IN_PROGRESS,
+            'progress' => 68,
+            'designer_id' => $designer->id,
+            'cover_image' => 'images/renova/about-exterior.jpg',
+        ]);
+        foreach ([
+            'images/renova/about-exterior.jpg',
+            'images/renova/hero.jpg',
+            'images/renova/feature-green.jpg',
+            'images/renova/about-interior.jpg',
+            'images/renova/feature-plans.jpg',
+        ] as $path) {
+            $project->referenceImages()->create([
+                'path' => $path,
+                'original_name' => basename($path),
+            ]);
+        }
+
+        $this->actingAs($other)->get(route('homeowner.projects.show', $project))->assertForbidden();
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.projects.show', $project))
+            ->assertOk()
+            ->assertSee('Lakeview Villa Renovation')
+            ->assertSee('1/5')
+            ->assertSee('Project Stage Timeline')
+            ->assertSee(route('homeowner.professionals.show', $designer, false))
+            ->assertDontSee('Design Process')
+            ->assertDontSee(route('homeowner.projects.messages', $project, false));
+
+        \Livewire\Livewire::actingAs($owner)
+            ->test(\App\Livewire\ProjectGallery::class, ['projectId' => $project->id])
+            ->assertSee('1/5')
+            ->call('next')
+            ->assertSet('index', 1)
+            ->call('select', 4)
+            ->assertSet('index', 4)
+            ->call('previous')
+            ->assertSet('index', 3);
+
+        \Livewire\Livewire::actingAs($other)
+            ->test(\App\Livewire\ProjectGallery::class, ['projectId' => $project->id])
+            ->assertForbidden();
+    }
+
     public function test_homeowner_home_explore_and_professional_profile_match_the_new_workspace(): void
     {
         $homeowner = User::factory()->create(['role' => 'homeowner', 'name' => 'Roshel Peter']);
@@ -403,5 +462,143 @@ class HomeownerWorkspaceTest extends TestCase
             'sender_id' => $homeowner->id,
             'body' => 'Can we start with the kitchen?',
         ]);
+    }
+
+    public function test_global_tasks_and_documents_stay_inside_owned_projects(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create(['role' => 'homeowner']);
+        $other = User::factory()->create(['role' => 'homeowner']);
+        $designer = User::factory()->create(['role' => 'designer', 'name' => 'Amaya Senarath']);
+        $owned = Project::factory()->for($owner, 'homeowner')->create([
+            'name' => 'Green Valley Residence',
+            'city' => 'Colombo',
+            'cover_image' => 'images/renova/feature-collab.jpg',
+        ]);
+        $second = Project::factory()->for($owner, 'homeowner')->create([
+            'name' => 'Apartment Interior Makeover',
+            'city' => 'Colombo 07',
+        ]);
+        $foreign = Project::factory()->for($other, 'homeowner')->create(['name' => 'Hidden House']);
+
+        $owned->tasks()->create([
+            'assignee_id' => $designer->id,
+            'name' => 'Finalise architectural drawings',
+            'description' => 'Issue the drawing set.',
+            'category' => 'design',
+            'status' => 'completed',
+            'progress' => 100,
+            'started_on' => '2025-06-01',
+            'due_on' => '2025-06-15',
+        ]);
+        $second->tasks()->create([
+            'assignee_id' => $designer->id,
+            'name' => 'Install kitchen cabinets',
+            'description' => 'Fit the kitchen joinery.',
+            'category' => 'construction',
+            'status' => 'in_progress',
+            'progress' => 60,
+            'due_on' => '2026-11-20',
+        ]);
+        $foreign->tasks()->create([
+            'name' => 'Secret task',
+            'description' => 'Should stay hidden.',
+            'category' => 'design',
+            'status' => 'pending',
+            'progress' => 0,
+        ]);
+
+        $document = $owned->documents()->create([
+            'uploaded_by' => $designer->id,
+            'name' => 'Final Contract',
+            'description' => 'Signed final contract.',
+            'original_name' => 'final-contract.pdf',
+            'category' => 'contracts',
+            'disk' => 'local',
+            'path' => 'projects/'.$owned->id.'/documents/final-contract.pdf',
+            'mime' => 'application/pdf',
+            'size' => 1200,
+        ]);
+        Storage::disk('local')->put($document->path, 'contract');
+        $second->documents()->create([
+            'uploaded_by' => $owner->id,
+            'name' => 'Design Proposal',
+            'description' => 'Concept drawings.',
+            'original_name' => 'design-proposal.pdf',
+            'category' => 'design',
+            'disk' => 'local',
+            'path' => 'projects/'.$second->id.'/documents/design-proposal.pdf',
+            'size' => 800,
+        ]);
+        Storage::disk('local')->put('projects/'.$second->id.'/documents/design-proposal.pdf', 'proposal');
+        $hidden = $foreign->documents()->create([
+            'uploaded_by' => $other->id,
+            'name' => 'Secret Plan',
+            'original_name' => 'secret.pdf',
+            'category' => 'design',
+            'disk' => 'local',
+            'path' => 'projects/secret.pdf',
+            'size' => 10,
+        ]);
+        Storage::disk('local')->put('projects/secret.pdf', 'secret');
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.tasks.index'))
+            ->assertOk()
+            ->assertSee('My Tasks')
+            ->assertSee('Finalise architectural drawings')
+            ->assertSee('Install kitchen cabinets')
+            ->assertSee('Green Valley Residence')
+            ->assertSee('Apartment Interior Makeover')
+            ->assertSee('All Projects')
+            ->assertDontSee('Secret task')
+            ->assertDontSee('Hidden House');
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.tasks.index', ['project' => $second->id, 'status' => 'in_progress', 'category' => 'construction', 'search' => 'kitchen']))
+            ->assertOk()
+            ->assertSee('Install kitchen cabinets')
+            ->assertDontSee('Finalise architectural drawings');
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.tasks.index', ['project' => $foreign->id]))
+            ->assertNotFound();
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.documents.index'))
+            ->assertOk()
+            ->assertSee('My Documents')
+            ->assertSee('Final Contract')
+            ->assertSee('Design Proposal')
+            ->assertSee('Green Valley Residence')
+            ->assertDontSee('Secret Plan');
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.documents.index', ['project' => $owned->id, 'type' => 'contracts', 'search' => 'contract']))
+            ->assertOk()
+            ->assertSee('Final Contract')
+            ->assertDontSee('Design Proposal');
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.projects.documents.download', [$owned, $document]))
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.projects.documents.show', [$second, $document]))
+            ->assertNotFound();
+
+        $this->actingAs($other)
+            ->get(route('homeowner.projects.documents.download', [$owned, $document]))
+            ->assertForbidden();
+
+        $this->actingAs($owner)
+            ->get(route('homeowner.documents.index', ['project' => $hidden->project_id]))
+            ->assertNotFound();
+
+        $this->actingAs($other)
+            ->get(route('homeowner.tasks.index'))
+            ->assertOk()
+            ->assertSee('Secret task')
+            ->assertDontSee('Install kitchen cabinets');
     }
 }

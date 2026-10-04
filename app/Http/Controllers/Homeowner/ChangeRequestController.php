@@ -19,7 +19,7 @@ class ChangeRequestController extends Controller
 
         $changes = ChangeRequest::query()
             ->whereIn('project_id', request()->user()->projects()->select('id'))
-            ->with('project')
+            ->with(['project', 'requester'])
             ->latest()
             ->paginate(10);
 
@@ -34,7 +34,7 @@ class ChangeRequestController extends Controller
         Gate::authorize('view', $project);
 
         return view('homeowner.change-requests.index', [
-            'changes' => $project->changeRequests()->with('project')->latest()->paginate(10),
+            'changes' => $project->changeRequests()->with(['project', 'requester'])->latest()->paginate(10),
             'project' => $project,
         ]);
     }

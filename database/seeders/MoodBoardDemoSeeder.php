@@ -13,6 +13,11 @@ class MoodBoardDemoSeeder extends Seeder
 
         foreach ($homeowner->projects as $project) {
             $project->moodBoard()?->delete();
+
+            // Ongoing projects keep an empty mood-board tab until the designer publishes direction.
+            if ($project->status === 'in_progress') {
+                continue;
+            }
             $board = $project->moodBoard()->create([
                 'created_by' => $project->designer_id,
                 'title' => $project->name.' direction',

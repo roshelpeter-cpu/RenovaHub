@@ -12,7 +12,8 @@
                         <div>
                             <p class="text-xs uppercase tracking-[0.14em] text-olive">{{ $quotation->number }} · {{ $quotation->project->name }}</p>
                             <h2 class="mt-1 font-serif text-2xl text-forest">{{ $quotation->money($quotation->total) }}</h2>
-                            <p class="mt-1 text-sm text-mist">{{ $quotation->contractor?->professionalProfile?->displayName() ?? $quotation->contractor?->name }} · {{ $quotation->statusLabel() }}</p>
+                            <p class="mt-1 text-sm text-mist">{{ $quotation->project->name }} · {{ $quotation->statusLabel() }}</p>
+                            <p class="mt-1 text-sm text-mist">Submitted {{ $quotation->created_at->format('j M Y') }}@if ($quotation->approved_at) · Approved {{ $quotation->approved_at->format('j M Y') }}@endif</p>
                             <p class="mt-2 text-sm text-charcoal">{{ $quotation->description }}</p>
                         </div>
                         <a href="{{ route('homeowner.quotations.show', [$quotation->project, $quotation]) }}" class="rounded-full border border-forest px-4 py-2 text-sm font-medium text-forest">View quotation</a>

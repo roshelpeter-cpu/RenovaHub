@@ -67,8 +67,10 @@ Route::middleware([
         Route::get('projects/{project}/tasks/{task}', [TaskController::class, 'show'])->name('projects.tasks.show');
 
         Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
+        Route::post('documents', [DocumentController::class, 'storeGlobal'])->name('documents.store');
         Route::get('projects/{project}/documents', [DocumentController::class, 'project'])->name('projects.documents');
         Route::post('projects/{project}/documents', [DocumentController::class, 'store'])->name('projects.documents.store');
+        Route::get('projects/{project}/documents/{document}', [DocumentController::class, 'show'])->name('projects.documents.show');
         Route::get('projects/{project}/documents/{document}/download', [DocumentController::class, 'download'])->name('projects.documents.download');
         Route::delete('projects/{project}/documents/{document}', [DocumentController::class, 'destroy'])->name('projects.documents.destroy');
 

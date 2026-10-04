@@ -1,19 +1,19 @@
-@props(['title' => 'Home', 'flush' => false])
+@props(['title' => 'Home', 'flush' => false, 'canvas' => false])
 
 @php
     $navCounts = $navCounts ?? ['messages' => 0, 'notifications' => 0];
     $user = auth()->user();
-    // Screenshot nav is the full workspace strip. Explore stays reachable from Home
-    // and from Browse Professionals rather than as a sixth visual style.
+    // Project URLs keep My Projects active. Global Tasks and Documents are separate pages.
+    $onProject = request()->is('homeowner/projects', 'homeowner/projects/*');
     $links = [
-        ['label' => 'Home', 'href' => route('homeowner.home'), 'active' => request()->routeIs('homeowner.home', 'dashboard', 'homeowner.explore', 'homeowner.professionals.*')],
-        ['label' => 'My Projects', 'href' => route('homeowner.projects.index'), 'active' => request()->routeIs('homeowner.projects.*')],
-        ['label' => 'Tasks', 'href' => route('homeowner.tasks.index'), 'active' => request()->routeIs('homeowner.tasks.*', 'homeowner.projects.tasks*')],
-        ['label' => 'Documents', 'href' => route('homeowner.documents.index'), 'active' => request()->routeIs('homeowner.documents.*', 'homeowner.projects.documents*')],
-        ['label' => 'Mood Board', 'href' => route('homeowner.mood-board.index'), 'active' => request()->routeIs('homeowner.mood-board.*', 'homeowner.projects.mood-board*')],
-        ['label' => 'Quotations', 'href' => route('homeowner.quotations.index'), 'active' => request()->routeIs('homeowner.quotations.*', 'homeowner.projects.quotations*')],
-        ['label' => 'Change Requests', 'href' => route('homeowner.change-requests.index'), 'active' => request()->routeIs('homeowner.change-requests.*', 'homeowner.projects.change-requests*')],
-        ['label' => 'Messages', 'href' => route('homeowner.messages.index'), 'active' => request()->routeIs('homeowner.messages.*')],
+        ['label' => 'Home', 'href' => route('homeowner.home'), 'active' => ! $onProject && request()->routeIs('homeowner.home', 'dashboard', 'homeowner.explore', 'homeowner.professionals.*')],
+        ['label' => 'My Projects', 'href' => route('homeowner.projects.index'), 'active' => $onProject],
+        ['label' => 'Tasks', 'href' => route('homeowner.tasks.index'), 'active' => request()->routeIs('homeowner.tasks.*')],
+        ['label' => 'Documents', 'href' => route('homeowner.documents.index'), 'active' => request()->routeIs('homeowner.documents.*')],
+        ['label' => 'Mood Board', 'href' => route('homeowner.mood-board.index'), 'active' => request()->routeIs('homeowner.mood-board.index')],
+        ['label' => 'Quotations', 'href' => route('homeowner.quotations.index'), 'active' => request()->routeIs('homeowner.quotations.index')],
+        ['label' => 'Change Requests', 'href' => route('homeowner.change-requests.index'), 'active' => request()->routeIs('homeowner.change-requests.index')],
+        ['label' => 'Messages', 'href' => route('homeowner.messages.index'), 'active' => request()->routeIs('homeowner.messages.*') && ! $onProject],
     ];
 @endphp
 
@@ -29,7 +29,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
-    <body class="min-h-screen bg-white font-outfit text-[#18352A] antialiased">
+    <body class="min-h-screen {{ $canvas ? 'bg-[#F7F4EE]' : 'bg-white' }} font-outfit text-[#18352A] antialiased">
         <input id="homeowner-menu" type="checkbox" class="peer/menu sr-only">
 
         <header class="sticky top-0 z-40 border-b border-[#ece7dc] bg-white">

@@ -28,7 +28,6 @@ class ProjectController extends Controller
         'mood-board',
         'quotations',
         'change-requests',
-        'payments',
     ];
 
     /**
@@ -78,17 +77,14 @@ class ProjectController extends Controller
 
         $tab = $request->string('tab')->toString();
         $tabRoutes = [
-            'design-process' => null,
             'tasks' => 'homeowner.projects.tasks',
             'documents' => 'homeowner.projects.documents',
             'mood-board' => 'homeowner.projects.mood-board',
             'quotations' => 'homeowner.projects.quotations',
             'change-requests' => 'homeowner.projects.change-requests',
-            'payments' => 'homeowner.projects.payments',
-            'messages' => 'homeowner.projects.messages',
         ];
 
-        if (isset($tabRoutes[$tab]) && $tabRoutes[$tab] !== null) {
+        if (isset($tabRoutes[$tab])) {
             return redirect()->route($tabRoutes[$tab], $project);
         }
 
@@ -97,11 +93,12 @@ class ProjectController extends Controller
             'contractor.professionalProfile',
             'invitations.professional',
             'progressStages',
-            'milestones',
+            'milestones' => fn ($query) => $query->orderBy('due_on')->orderBy('id'),
             'quotations',
             'payments',
             'activity.user',
             'referenceImages',
+            'budgetItems',
         ]);
 
         foreach (['designer', 'contractor'] as $role) {
@@ -111,7 +108,7 @@ class ProjectController extends Controller
 
         return view('homeowner.projects.show', [
             'project' => $project,
-            'section' => in_array($tab, ['design-process'], true) ? $tab : 'overview',
+            'section' => 'overview',
         ]);
     }
 
