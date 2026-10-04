@@ -10,8 +10,8 @@ use Illuminate\View\View;
 class HomeController extends Controller
 {
     /**
-     * Homeowner Home is the signed-in landing page.
-     * Project modules stay as shortcuts here rather than top-level navigation.
+     * Home is the screenshot dashboard. Workspace modules stay linked from
+     * the top nav and the Manage Your Project row; their full workflows stay elsewhere.
      */
     public function __invoke(Request $request, DashboardService $dashboard): View
     {

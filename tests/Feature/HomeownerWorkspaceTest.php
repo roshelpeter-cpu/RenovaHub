@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ChangeRequest;
+use App\Models\Conversation;
 use App\Models\Payment;
 use App\Models\Project;
 use App\Models\ProjectInvitation;
@@ -208,27 +209,75 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertDontSee('Modern Villa Renovation');
     }
 
-    public function test_homeowner_home_and_explore_use_short_navigation(): void
+    public function test_homeowner_home_explore_and_professional_profile_match_the_new_workspace(): void
     {
         $homeowner = User::factory()->create(['role' => 'homeowner', 'name' => 'Roshel Peter']);
         $designer = User::factory()->create(['role' => 'designer', 'name' => 'Amaya Senarath']);
-        $designer->professionalProfile()->create([
+        $profile = $designer->professionalProfile()->create([
             'professional_type' => 'designer',
             'title' => 'Interior Designer',
             'specialization' => 'Modern, Minimal, Contemporary',
             'tags' => ['Modern', 'Minimal', 'Contemporary'],
             'bio' => 'Interior designer with a focus on modern and functional living spaces.',
             'location' => 'Colombo',
-            'avatar_path' => 'images/renova/about-interior.jpg',
+            'avatar_path' => 'images/professionals/amaya-senarath.jpg',
             'cover_path' => 'images/renova/feature-collab.jpg',
             'years_experience' => 6,
             'completed_projects_count' => 50,
+            'client_satisfaction' => 95,
             'rating' => 4.8,
             'review_count' => 42,
-            'starting_price' => 180000,
+            'starting_price' => 5000,
             'listed' => true,
             'featured' => true,
             'verified' => true,
+        ]);
+        $profile->portfolioItems()->create([
+            'title' => 'Villa living',
+            'description' => 'Open living space.',
+            'image' => 'images/renova/about-interior.jpg',
+            'category' => 'Residential',
+            'location' => 'Colombo',
+            'budget_min' => 800000,
+            'budget_max' => 1400000,
+            'completion_year' => 2025,
+        ]);
+        $nethmi = User::factory()->create(['role' => 'designer', 'name' => 'Nethmi Wijesinghe']);
+        $nethmi->professionalProfile()->create([
+            'professional_type' => 'designer',
+            'title' => 'Interior Designer',
+            'specialization' => 'Modern, Minimal, Residential',
+            'tags' => ['Modern', 'Minimal', 'Residential'],
+            'bio' => 'Interior designer with a focus on modern and functional living spaces.',
+            'location' => 'Colombo',
+            'avatar_path' => 'images/professionals/nethmi-wijesinghe.jpg',
+            'cover_path' => 'images/renova/feature-collab.jpg',
+            'years_experience' => 7,
+            'completed_projects_count' => 28,
+            'rating' => 4.8,
+            'review_count' => 28,
+            'starting_price' => 200000,
+            'listed' => true,
+            'featured' => false,
+            'verified' => true,
+        ]);
+        $case = $profile->caseStudies()->create([
+            'slug' => 'modern-villa-renovation',
+            'title' => 'Modern Villa Renovation',
+            'category' => 'Residential',
+            'location' => 'Colombo',
+            'property_type' => 'Residential',
+            'project_type' => 'Full Home Renovation',
+            'size_sq_ft' => 3200,
+            'budget' => 28500000,
+            'completed_on' => '2025-03-01',
+            'summary' => 'A complete interior and exterior renovation of a two-storey villa.',
+            'overview' => 'The goal of this project was to transform an older villa.',
+            'highlights' => ['Open-plan living'],
+            'process' => [['title' => 'Concept & Mood Board', 'body' => 'Initial concepts', 'image' => 'images/renova/feature-green.jpg']],
+            'hero_image' => 'images/renova/about-interior.jpg',
+            'featured' => true,
+            'sort_order' => 1,
         ]);
         $contractor = User::factory()->create(['role' => 'contractor', 'name' => 'Lanka Build Co']);
         $contractor->professionalProfile()->create([
@@ -255,8 +304,10 @@ class HomeownerWorkspaceTest extends TestCase
             ->get(route('homeowner.home'))
             ->assertOk()
             ->assertSee('Bring your renovation')
+            ->assertSee('Spaces')
             ->assertSee('Browse Professionals')
-            ->assertSee('Manage Your Project')
+            ->assertSee('Tasks')
+            ->assertSee('Messages')
             ->assertSee(route('homeowner.explore', [], false));
 
         $this->actingAs($homeowner)
@@ -264,13 +315,20 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertOk()
             ->assertSee('Find Trusted Professionals')
             ->assertSee('Amaya Senarath')
-            ->assertSee('View Portfolio');
+            ->assertSee('View Portfolio')
+            ->assertDontSee('View Profile');
 
         $this->actingAs($homeowner)
             ->get(route('homeowner.professionals.show', $designer))
             ->assertOk()
             ->assertSee('Amaya Senarath')
-            ->assertSee('Portfolio');
+            ->assertSee('Project Portfolio');
+
+        $this->actingAs($homeowner)
+            ->get(route('homeowner.professionals.project', [$designer, $case->slug]))
+            ->assertOk()
+            ->assertSee('Modern Villa Renovation')
+            ->assertSee('Design Process');
 
         \Livewire\Livewire::actingAs($homeowner)
             ->test(\App\Livewire\ExploreProfessionals::class)
@@ -278,5 +336,69 @@ class HomeownerWorkspaceTest extends TestCase
             ->set('type', 'contractor')
             ->assertSee('Lanka Build Co')
             ->assertDontSee('Amaya Senarath');
+    }
+
+    public function test_contacting_a_professional_opens_one_conversation_and_blocks_idor(): void
+    {
+        $homeowner = User::factory()->create(['role' => 'homeowner', 'name' => 'Roshel Peter']);
+        $other = User::factory()->create(['role' => 'homeowner']);
+        $project = Project::factory()->for($homeowner, 'homeowner')->create(['name' => 'Modern Villa Renovation', 'city' => 'Colombo']);
+        $designer = User::factory()->create(['role' => 'designer', 'name' => 'Amaya Senarath']);
+        $designer->professionalProfile()->create([
+            'professional_type' => 'designer',
+            'title' => 'Interior Designer',
+            'bio' => 'Interior designer with a focus on modern living spaces.',
+            'listed' => true,
+            'location' => 'Colombo',
+        ]);
+        $contractor = User::factory()->create(['role' => 'contractor', 'name' => 'Lanka Build Co']);
+        $contractor->professionalProfile()->create([
+            'professional_type' => 'contractor',
+            'title' => 'Renovation Contractor',
+            'bio' => 'Residential renovation contractor based in Colombo.',
+            'listed' => true,
+            'location' => 'Colombo',
+        ]);
+
+        $this->actingAs($homeowner)
+            ->post(route('homeowner.professionals.contact', $designer))
+            ->assertRedirect();
+
+        $conversation = Conversation::query()->first();
+        $this->assertNotNull($conversation);
+        $this->assertSame($project->id, $conversation->project_id);
+        $this->assertSame(1, Conversation::query()->count());
+
+        $this->actingAs($homeowner)
+            ->get(route('homeowner.messages.show', $conversation))
+            ->assertOk()
+            ->assertSee('Amaya Senarath')
+            ->assertSee('Messages');
+
+        $this->actingAs($homeowner)
+            ->post(route('homeowner.professionals.contact', $designer))
+            ->assertRedirect(route('homeowner.messages.show', $conversation));
+        $this->assertSame(1, Conversation::query()->count());
+
+        $this->actingAs($homeowner)
+            ->post(route('homeowner.professionals.contact', $contractor))
+            ->assertRedirect();
+        $this->assertSame(2, Conversation::query()->count());
+
+        $this->actingAs($other)
+            ->get(route('homeowner.messages.show', $conversation))
+            ->assertForbidden();
+
+        \Livewire\Livewire::actingAs($homeowner)
+            ->test(\App\Livewire\MessagesInbox::class, ['conversationId' => $conversation->id])
+            ->set('body', 'Can we start with the kitchen?')
+            ->call('send')
+            ->assertSee('Can we start with the kitchen?');
+
+        $this->assertDatabaseHas('conversation_messages', [
+            'conversation_id' => $conversation->id,
+            'sender_id' => $homeowner->id,
+            'body' => 'Can we start with the kitchen?',
+        ]);
     }
 }

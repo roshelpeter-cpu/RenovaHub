@@ -2,15 +2,17 @@
 
 namespace Database\Seeders;
 
+use App\Models\ProfessionalProfile;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ExploreProfessionalSeeder extends Seeder
 {
     /**
-     * Public directory listings only. Team-picker profiles stay unlisted
-     * so Explore can match the assignment counts without duplicating wizard data.
+     * Directory cards, profile pages and case studies all read from these
+     * rows so Blade never hardcodes Amaya's villa or the featured four.
      */
     public function run(): void
     {
@@ -26,8 +28,18 @@ class ExploreProfessionalSeeder extends Seeder
             'images/renova/feature-tasks.jpg',
         ];
 
+        $portraits = [
+            'amaya.senarath@renovahub.test' => 'images/professionals/amaya-senarath.jpg',
+            'dinesh.jayawardena@renovahub.test' => 'images/professionals/dinesh-jayawardena.jpg',
+            'sithumi.fernando@renovahub.test' => 'images/professionals/sithumi-fernando.jpg',
+            'kavinda.perera@renovahub.test' => 'images/professionals/kavinda-perera.jpg',
+            'nethmi.wijesinghe@renovahub.test' => 'images/professionals/nethmi-wijesinghe.jpg',
+            'sahan.wickramasinghe@renovahub.test' => 'images/professionals/sahan-wickramasinghe.jpg',
+            'imara.perera@renovahub.test' => 'images/professionals/imara-perera.jpg',
+        ];
+
         $designers = [
-            ['Amaya Senarath', 'amaya.senarath@renovahub.test', 'Interior Designer', ['Modern', 'Minimal', 'Contemporary'], 4.8, 42, true, true, 'I specialise in residential interiors, space planning and creating personalised designs.', 6, 50, 180000],
+            ['Amaya Senarath', 'amaya.senarath@renovahub.test', 'Interior Designer', ['Modern', 'Minimal', 'Contemporary'], 4.8, 42, true, true, 'Interior designer with a focus on modern and functional living spaces. I specialise in residential renovations, space planning and creating personalised designs that match your lifestyle and budget.', 6, 50, 5000],
             ['Dinesh Jayawardena', 'dinesh.jayawardena@renovahub.test', 'Interior Designer', ['Modern', 'Luxury', 'Residential'], 4.9, 18, true, true, 'Luxury residential interiors with a calm, considered material palette.', 8, 22, 320000],
             ['Sithumi Fernando', 'sithumi.fernando@renovahub.test', 'Interior Designer', ['Scandinavian', 'Modern', 'Commercial'], 4.9, 31, true, true, 'Scandinavian-led commercial and home interiors across Colombo.', 9, 40, 280000],
             ['Kavinda Perera', 'kavinda.perera@renovahub.test', 'Interior Designer', ['Industrial', 'Modern', 'Minimal'], 4.6, 12, true, true, 'Industrial and minimal interiors for compact city homes.', 5, 16, 150000],
@@ -49,12 +61,14 @@ class ExploreProfessionalSeeder extends Seeder
         ];
 
         foreach ($designers as $index => $row) {
-            $this->make('designer', $row, $images[$index % count($images)], $images);
+            $this->make('designer', $row, $portraits[$row[1]] ?? $images[$index % count($images)], $images);
         }
 
         foreach ($contractors as $index => $row) {
-            $this->make('contractor', $row, $images[( $index + 3) % count($images)], $images);
+            $this->make('contractor', $row, $images[($index + 3) % count($images)], $images);
         }
+
+        $this->amayaCaseStudies();
     }
 
     /**
@@ -86,9 +100,10 @@ class ExploreProfessionalSeeder extends Seeder
                 'bio' => $bio,
                 'location' => 'Colombo',
                 'avatar_path' => $avatar,
-                'cover_path' => $images[array_search($avatar, $images, true) !== false ? (array_search($avatar, $images, true) + 1) % count($images) : 0],
+                'cover_path' => $images[0],
                 'years_experience' => $years,
                 'completed_projects_count' => $completed,
+                'client_satisfaction' => 95,
                 'rating' => $rating,
                 'review_count' => $reviews,
                 'starting_price' => $price,
@@ -98,25 +113,131 @@ class ExploreProfessionalSeeder extends Seeder
             ],
         );
 
-        if ($listed) {
-            $profile->services()->delete();
-            foreach ($tags as $tag) {
-                $profile->services()->create(['name' => $tag]);
-            }
+        if (! $listed) {
+            return;
+        }
 
-            $profile->portfolioItems()->delete();
-            foreach (array_slice($images, 0, 3) as $i => $image) {
-                $profile->portfolioItems()->create([
-                    'title' => $tags[0].' project '.($i + 1),
-                    'description' => 'A completed '.$role.' project in Colombo.',
-                    'image' => $image,
-                    'category' => $tags[0],
-                    'location' => 'Colombo',
-                    'budget_min' => 800000 + ($i * 400000),
-                    'budget_max' => 1400000 + ($i * 400000),
-                    'completion_year' => 2024 - $i,
-                ]);
+        $profile->services()->delete();
+        $serviceNames = $email === 'amaya.senarath@renovahub.test'
+            ? ['Residential Interiors', 'Space Planning', 'Modern & Minimal Design', '3D Visualization', 'Furniture Selection', 'Renovation Consultation']
+            : $tags;
+        foreach ($serviceNames as $tag) {
+            $profile->services()->create(['name' => $tag]);
+        }
+
+        $profile->portfolioItems()->delete();
+        foreach (array_slice($images, 0, 3) as $i => $image) {
+            $profile->portfolioItems()->create([
+                'title' => $tags[0].' project '.($i + 1),
+                'description' => 'A completed '.$role.' project in Colombo.',
+                'image' => $image,
+                'category' => $tags[0],
+                'location' => 'Colombo',
+                'budget_min' => 800000 + ($i * 400000),
+                'budget_max' => 1400000 + ($i * 400000),
+                'completion_year' => 2024 - $i,
+            ]);
+        }
+
+        if ($email !== 'amaya.senarath@renovahub.test') {
+            $this->genericCaseStudies($profile, $images, $tags[0] ?? 'Residential');
+        }
+    }
+
+    private function amayaCaseStudies(): void
+    {
+        $profile = User::query()->where('email', 'amaya.senarath@renovahub.test')->firstOrFail()->professionalProfile;
+        $profile->caseStudies()->delete();
+        $profile->reviews()->delete();
+
+        $rows = [
+            ['Modern Villa Renovation', 'Residential', 'Colombo', 'Residential', 'Full Home Renovation', 3200, 28500000, '2025-03-01', 'images/renova/about-interior.jpg', true, 1],
+            ['Apartment Renovation', 'Residential', 'Colombo', 'Residential', 'Apartment renovation', 1800, 12500000, '2024-11-01', 'images/renova/feature-collab.jpg', false, 2],
+            ['Minimalist Family Home', 'Residential', 'Kandy', 'Residential', 'Family home renovation', 2400, 9800000, '2024-08-01', 'images/renova/feature-green.jpg', false, 3],
+            ['Luxury Penthouse', 'Residential', 'Colombo', 'Residential', 'Penthouse interior', 2100, 22000000, '2024-04-01', 'images/renova/auth-register.jpg', false, 4],
+            ['Office Interior Design', 'Commercial', 'Colombo', 'Commercial', 'Office interior', 4000, 15000000, '2023-12-01', 'images/renova/feature-progress.jpg', false, 5],
+            ['Scandinavian Home', 'Residential', 'Galle', 'Residential', 'Scandinavian interior', 1900, 8700000, '2023-09-01', 'images/renova/feature-plans.jpg', false, 6],
+        ];
+
+        foreach ($rows as $row) {
+            [$title, $category, $location, $property, $type, $size, $budget, $completed, $hero, $featured, $order] = $row;
+            $project = $profile->caseStudies()->create([
+                'slug' => Str::slug($title),
+                'title' => $title,
+                'category' => $category,
+                'location' => $location,
+                'property_type' => $property,
+                'project_type' => $type,
+                'size_sq_ft' => $size,
+                'budget' => $budget,
+                'completed_on' => $completed,
+                'summary' => $title === 'Modern Villa Renovation'
+                    ? 'A complete interior and exterior renovation of a two-storey villa, focusing on modern and functional living spaces. The project included living areas, bedrooms, kitchen, outdoor spaces and landscaping, designed to create a warm, modern and elegant home.'
+                    : 'A completed interior project designed around light, storage and a calm material palette.',
+                'overview' => 'The goal of this project was to transform an older villa into a modern, spacious and functional home while maintaining a warm and elegant aesthetic. The design focused on open spaces, natural lighting and modern details. The project included complete interior renovation, kitchen and bathroom upgrades, custom cabinetry, lighting design and an outdoor living area with landscaping.',
+                'highlights' => [
+                    'Modern and functional interior design',
+                    'Open-plan living and dining area',
+                    'Custom kitchen and storage solutions',
+                    'Upgraded bathrooms with modern finishes',
+                    'Outdoor seating area and landscaping',
+                ],
+                'process' => [
+                    ['title' => 'Concept & Mood Board', 'body' => 'Initial concepts and design direction based on the client’s requirements.', 'image' => 'images/renova/feature-green.jpg'],
+                    ['title' => 'Design Development', 'body' => 'Finalized layouts, materials and colour scheme.', 'image' => 'images/renova/feature-plans.jpg'],
+                    ['title' => 'Implementation', 'body' => 'Detailed execution with custom furniture and finishes.', 'image' => 'images/renova/feature-docs.jpg'],
+                    ['title' => 'Final Result', 'body' => 'A modern, elegant and functional home completed successfully.', 'image' => 'images/renova/about-interior.jpg'],
+                ],
+                'hero_image' => $hero,
+                'featured' => $featured,
+                'sort_order' => $order,
+            ]);
+
+            foreach (['images/renova/about-exterior.jpg', 'images/renova/feature-collab.jpg', 'images/renova/feature-progress.jpg', 'images/renova/feature-green.jpg'] as $i => $path) {
+                $project->images()->create(['path' => $path, 'sort_order' => $i]);
             }
+        }
+
+        $profile->reviews()->create([
+            'author_name' => 'Dilan Perera',
+            'project_title' => 'Homeowner, Colombo',
+            'body' => 'Amaya was amazing to work with. She understood our vision perfectly and transformed our villa into a modern and beautiful home. The whole process was smooth and professional.',
+            'rating' => 5.0,
+        ]);
+    }
+
+    /**
+     * @param  list<string>  $images
+     */
+    private function genericCaseStudies(ProfessionalProfile $profile, array $images, string $category): void
+    {
+        $profile->caseStudies()->delete();
+        $titles = [$category.' Studio', $category.' Residence', $category.' Refresh'];
+
+        foreach ($titles as $i => $title) {
+            $profile->caseStudies()->create([
+                'slug' => Str::slug($profile->id.'-'.$title),
+                'title' => $title,
+                'category' => $category,
+                'location' => 'Colombo',
+                'property_type' => 'Residential',
+                'project_type' => $category,
+                'size_sq_ft' => 1800 + ($i * 200),
+                'budget' => 4500000 + ($i * 800000),
+                'completed_on' => now()->subMonths(8 + $i)->toDateString(),
+                'summary' => 'A completed '.$category.' project in Colombo.',
+                'overview' => 'The work focused on daylight, storage and a calm finish palette.',
+                'highlights' => ['Practical layout', 'Durable finishes', 'Clear budget control'],
+                'process' => [
+                    ['title' => 'Concept & Mood Board', 'body' => 'Direction set with the client.', 'image' => $images[0]],
+                    ['title' => 'Design Development', 'body' => 'Layouts and materials confirmed.', 'image' => $images[1]],
+                    ['title' => 'Implementation', 'body' => 'Site work and joinery.', 'image' => $images[2]],
+                    ['title' => 'Final Result', 'body' => 'Handover of the completed rooms.', 'image' => $images[3]],
+                ],
+                'hero_image' => $images[$i % count($images)],
+                'featured' => $i === 0,
+                'sort_order' => $i + 1,
+            ]);
         }
     }
 }

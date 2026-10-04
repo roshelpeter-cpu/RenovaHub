@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Events\ProjectInvitationResponded;
 use App\Events\QuotationDecided;
 use App\Listeners\RecordWorkspaceActivity;
-use App\Models\Message;
+use App\Models\Conversation;
+use App\Models\ConversationMessage;
 use App\Models\ProfessionalProfile;
 use App\Models\Project;
+use App\Policies\ConversationPolicy;
 use App\Policies\ProfessionalProfilePolicy;
 use App\Policies\ProjectPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(ProfessionalProfile::class, ProfessionalProfilePolicy::class);
+        Gate::policy(Conversation::class, ConversationPolicy::class);
 
         Event::listen(ProjectInvitationResponded::class, [RecordWorkspaceActivity::class, 'handleInvitation']);
         Event::listen(QuotationDecided::class, [RecordWorkspaceActivity::class, 'handleQuotation']);
@@ -51,13 +54,17 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            $projectIds = $user->projects()->select('id');
-
             $view->with('navCounts', [
-                'messages' => Message::query()
-                    ->whereIn('project_id', $projectIds)
-                    ->whereNull('read_at')
+                'messages' => ConversationMessage::query()
+                    ->whereHas('conversation.participants', fn ($query) => $query->where('users.id', $user->id))
                     ->where('sender_id', '!=', $user->id)
+                    ->where(function ($query) use ($user) {
+                        $query->whereDoesntHave('conversation.participantRows', fn ($inner) => $inner->where('user_id', $user->id)->whereNotNull('last_read_at'))
+                            ->orWhereHas('conversation.participantRows', function ($inner) use ($user) {
+                                $inner->where('user_id', $user->id)
+                                    ->whereColumn('conversation_participants.last_read_at', '<', 'conversation_messages.created_at');
+                            });
+                    })
                     ->count(),
                 'notifications' => $user->unreadNotifications()->count(),
             ]);

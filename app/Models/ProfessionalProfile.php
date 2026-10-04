@@ -30,6 +30,7 @@ class ProfessionalProfile extends Model
         'review_count',
         'tags',
         'cover_path',
+        'client_satisfaction',
     ];
 
     /**
@@ -47,7 +48,13 @@ class ProfessionalProfile extends Model
             'verified' => 'boolean',
             'review_count' => 'integer',
             'tags' => 'array',
+            'client_satisfaction' => 'integer',
         ];
+    }
+
+    public function caseStudies(): HasMany
+    {
+        return $this->hasMany(ProfessionalProject::class)->orderBy('sort_order');
     }
 
     public function reviews(): HasMany

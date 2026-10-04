@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\Homeowner\ChangeRequestController;
 use App\Http\Controllers\Homeowner\DocumentController;
+use App\Http\Controllers\Homeowner\ConversationController;
 use App\Http\Controllers\Homeowner\HomeController;
 use App\Http\Controllers\Homeowner\MessageController;
 use App\Http\Controllers\Homeowner\MoodBoardController;
@@ -42,6 +43,9 @@ Route::middleware([
             ->name('sections.show');
 
         Route::get('professionals/{professional}', [ProfessionalController::class, 'show'])->name('professionals.show');
+        Route::get('professionals/{professional}/projects/{caseStudy}', [ProfessionalController::class, 'project'])->name('professionals.project');
+        Route::post('professionals/{professional}/favourite', [ProfessionalController::class, 'favourite'])->name('professionals.favourite');
+        Route::post('professionals/{professional}/contact', [ProfessionalController::class, 'contact'])->name('professionals.contact');
 
         Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
         Route::get('projects/create', [ProjectController::class, 'create'])->name('projects.create');
@@ -83,7 +87,8 @@ Route::middleware([
         Route::post('projects/{project}/change-requests', [ChangeRequestController::class, 'store'])->name('projects.change-requests.store');
         Route::get('projects/{project}/change-requests/{changeRequest}', [ChangeRequestController::class, 'show'])->name('change-requests.show');
 
-        Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
+        Route::get('messages', [ConversationController::class, 'index'])->name('messages.index');
+        Route::get('messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
         Route::get('projects/{project}/messages', [MessageController::class, 'show'])->name('projects.messages');
         Route::post('projects/{project}/messages', [MessageController::class, 'store'])->name('projects.messages.store');
 

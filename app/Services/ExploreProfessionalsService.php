@@ -21,7 +21,7 @@ class ExploreProfessionalsService
         $query = ProfessionalProfile::query()
             ->where('listed', true)
             ->where('professional_type', $role)
-            ->with(['user', 'portfolioItems']);
+            ->with(['user', 'portfolioItems', 'caseStudies']);
 
         if ($search !== '') {
             $term = '%'.addcslashes($search, '%_\\').'%';

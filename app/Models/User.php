@@ -92,6 +92,11 @@ class User extends Authenticatable
         return $this->hasMany(ProfessionalFavourite::class);
     }
 
+    public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants')->withPivot('last_read_at')->withTimestamps();
+    }
+
     public function isDesigner(): bool
     {
         return $this->role === 'designer';

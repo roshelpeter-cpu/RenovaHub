@@ -22,6 +22,7 @@ class DemoDataSeeder extends Seeder
             MoodBoardDemoSeeder::class,
             ChangeRequestDemoSeeder::class,
             MessageDemoSeeder::class,
+            ConversationDemoSeeder::class,
             PaymentDemoSeeder::class,
             NotificationDemoSeeder::class,
             ActivityDemoSeeder::class,
