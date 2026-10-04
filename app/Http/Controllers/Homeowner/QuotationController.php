@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Homeowner;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DecideQuotationRequest;
+use App\Http\Requests\Homeowner\QuotationIndexRequest;
 use App\Models\Project;
 use App\Models\Quotation;
 use App\Services\QuotationService;
@@ -13,28 +14,29 @@ use Illuminate\View\View;
 
 class QuotationController extends Controller
 {
-    public function index(): View
+    public function index(QuotationIndexRequest $request, QuotationService $quotations): View
     {
         Gate::authorize('viewAny', Project::class);
 
-        $quotations = Quotation::query()
-            ->whereIn('project_id', request()->user()->projects()->select('id'))
-            ->with(['project', 'contractor.professionalProfile'])
-            ->latest()
-            ->paginate(10);
-
         return view('homeowner.quotations.index', [
-            'quotations' => $quotations,
+            ...$quotations->homeownerBoard($request->user(), $request->validated()),
             'project' => null,
         ]);
     }
 
-    public function project(Project $project): View
+    public function project(Project $project, QuotationService $quotations): View
     {
         Gate::authorize('view', $project);
 
         return view('homeowner.quotations.index', [
-            'quotations' => $project->quotations()->with(['contractor.professionalProfile', 'project'])->latest()->paginate(10),
+            ...$quotations->homeownerBoard(request()->user(), [
+                'project' => $project->id,
+                'status' => null,
+                'professional' => null,
+                'search' => null,
+                'from' => null,
+                'to' => null,
+            ]),
             'project' => $project,
         ]);
     }

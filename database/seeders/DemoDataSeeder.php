@@ -24,6 +24,7 @@ class DemoDataSeeder extends Seeder
             MessageDemoSeeder::class,
             ConversationDemoSeeder::class,
             PaymentDemoSeeder::class,
+            ProjectFeedbackDemoSeeder::class,
             NotificationDemoSeeder::class,
             ActivityDemoSeeder::class,
         ]);

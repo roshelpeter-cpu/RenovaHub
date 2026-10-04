@@ -38,6 +38,16 @@ return [
     'client_id' => env('GOOGLE_CLIENT_ID'),
     'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     'redirect' => env('GOOGLE_REDIRECT_URI'),
+    'places_key' => env('GOOGLE_PLACES_API_KEY'),
+],
+
+'payhere' => [
+    'merchant_id' => env('PAYHERE_MERCHANT_ID'),
+    'merchant_secret' => env('PAYHERE_MERCHANT_SECRET'),
+    'sandbox' => env('PAYHERE_SANDBOX', true),
+    'return_url' => env('PAYHERE_RETURN_URL'),
+    'cancel_url' => env('PAYHERE_CANCEL_URL'),
+    'notify_url' => env('PAYHERE_NOTIFY_URL'),
 ],
 
 ];

@@ -30,6 +30,7 @@ class ChangeRequest extends Model
         'category',
         'priority',
         'status',
+        'approved_at',
         'contractor_response',
         'designer_response',
         'cost_impact',
@@ -39,7 +40,10 @@ class ChangeRequest extends Model
 
     protected function casts(): array
     {
-        return ['cost_impact' => 'decimal:2'];
+        return [
+            'cost_impact' => 'decimal:2',
+            'approved_at' => 'datetime',
+        ];
     }
 
     public function project(): BelongsTo
@@ -59,12 +63,32 @@ class ChangeRequest extends Model
     {
         return [
             'design' => 'Design',
-            'material' => 'Material',
+            'interior' => 'Interior',
+            'material' => 'Materials',
+            'electrical' => 'Electrical',
+            'fixtures' => 'Fixtures',
+            'carpentry' => 'Carpentry',
+            'structural' => 'Structural',
             'construction' => 'Construction',
             'scope' => 'Scope',
             'budget' => 'Budget',
             'timeline' => 'Timeline',
         ];
+    }
+
+    public function categoryLabel(): string
+    {
+        return self::categories()[$this->category] ?? ucfirst((string) $this->category);
+    }
+
+    public function reviewLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_SUBMITTED => 'Pending',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_APPROVED, self::STATUS_IMPLEMENTED => 'Approved',
+            default => 'In Review',
+        };
     }
 
     /**

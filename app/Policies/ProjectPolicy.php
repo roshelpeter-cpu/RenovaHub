@@ -37,4 +37,13 @@ class ProjectPolicy
     {
         return $this->view($user, $project);
     }
+
+    /**
+     * Homeowners can add documents, inspiration and change requests only
+     * while the project is still open. Hiding the button is not the check.
+     */
+    public function contribute(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && ! $project->isClosedRecord();
+    }
 }

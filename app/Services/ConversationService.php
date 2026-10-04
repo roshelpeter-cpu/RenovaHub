@@ -110,6 +110,24 @@ class ConversationService
         return $message;
     }
 
+    /**
+     * Soft delete keeps the row, but the default scope hides it. Only the
+     * sender is allowed to reach this method.
+     */
+    public function deleteMessage(User $user, ConversationMessage $message): void
+    {
+        abort_unless($user->can('delete', $message), 403);
+
+        $conversation = $message->conversation;
+        $message->delete();
+
+        $latest = $conversation->messages()->latest('id')->first();
+        $conversation->forceFill([
+            'last_preview' => $latest?->body ? Str::limit($latest->body, 80) : ($latest ? 'Photo' : null),
+            'last_message_at' => $latest?->created_at,
+        ])->save();
+    }
+
     public function markRead(User $homeowner, Conversation $conversation): void
     {
         $conversation->participantRows()->where('user_id', $homeowner->id)->update(['last_read_at' => now()]);

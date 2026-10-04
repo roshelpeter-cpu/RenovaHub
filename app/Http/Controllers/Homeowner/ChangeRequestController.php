@@ -3,45 +3,48 @@
 namespace App\Http\Controllers\Homeowner;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Homeowner\ChangeRequestIndexRequest;
 use App\Http\Requests\StoreChangeRequestRequest;
 use App\Models\ChangeRequest;
 use App\Models\Project;
 use App\Services\ActivityLogService;
+use App\Services\ChangeRequestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class ChangeRequestController extends Controller
 {
-    public function index(): View
+    public function index(ChangeRequestIndexRequest $request, ChangeRequestService $changes): View
     {
         Gate::authorize('viewAny', Project::class);
 
-        $changes = ChangeRequest::query()
-            ->whereIn('project_id', request()->user()->projects()->select('id'))
-            ->with(['project', 'requester'])
-            ->latest()
-            ->paginate(10);
-
         return view('homeowner.change-requests.index', [
-            'changes' => $changes,
+            ...$changes->homeownerBoard($request->user(), $request->validated()),
             'project' => null,
         ]);
     }
 
-    public function project(Project $project): View
+    public function project(Project $project, ChangeRequestService $changes): View
     {
         Gate::authorize('view', $project);
 
         return view('homeowner.change-requests.index', [
-            'changes' => $project->changeRequests()->with(['project', 'requester'])->latest()->paginate(10),
+            ...$changes->homeownerBoard(request()->user(), [
+                'project' => $project->id,
+                'status' => null,
+                'category' => null,
+                'search' => null,
+                'from' => null,
+                'to' => null,
+            ]),
             'project' => $project,
         ]);
     }
 
     public function create(Project $project): View
     {
-        Gate::authorize('update', $project);
+        Gate::authorize('create', [ChangeRequest::class, $project]);
 
         return view('homeowner.change-requests.create', ['project' => $project]);
     }

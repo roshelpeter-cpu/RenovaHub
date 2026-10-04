@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Contractor\TaskController as ContractorTaskController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Homeowner\FeedbackController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\Homeowner\ChangeRequestController;
 use App\Http\Controllers\Homeowner\DocumentController;
@@ -32,6 +34,9 @@ Route::middleware([
 
     Route::get('invitations/{invitation}', [InvitationController::class, 'show'])->name('invitations.show');
     Route::post('invitations/{invitation}', [InvitationController::class, 'respond'])->name('invitations.respond');
+
+    // Outside the homeowner group: homeowners are denied by the task policy.
+    Route::post('projects/{project}/tasks', [ContractorTaskController::class, 'store'])->name('projects.tasks.store');
 
     // Homeowner project flow. The homeowner middleware and policies both reject other roles.
     Route::prefix('homeowner')->middleware('homeowner')->name('homeowner.')->group(function () {
@@ -75,7 +80,9 @@ Route::middleware([
         Route::delete('projects/{project}/documents/{document}', [DocumentController::class, 'destroy'])->name('projects.documents.destroy');
 
         Route::get('mood-board', [MoodBoardController::class, 'index'])->name('mood-board.index');
+        Route::post('mood-board', [MoodBoardController::class, 'storeItem'])->name('mood-board.store');
         Route::get('projects/{project}/mood-board', [MoodBoardController::class, 'show'])->name('projects.mood-board');
+        Route::post('projects/{project}/mood-board/items', [MoodBoardController::class, 'storeItem'])->name('projects.mood-board.items.store');
         Route::post('projects/{project}/mood-board/feedback', [MoodBoardController::class, 'feedback'])->name('projects.mood-board.feedback');
         Route::post('projects/{project}/mood-board/approve', [MoodBoardController::class, 'approve'])->name('projects.mood-board.approve');
 
@@ -89,6 +96,9 @@ Route::middleware([
         Route::get('projects/{project}/change-requests/create', [ChangeRequestController::class, 'create'])->name('projects.change-requests.create');
         Route::post('projects/{project}/change-requests', [ChangeRequestController::class, 'store'])->name('projects.change-requests.store');
         Route::get('projects/{project}/change-requests/{changeRequest}', [ChangeRequestController::class, 'show'])->name('change-requests.show');
+
+        Route::get('projects/{project}/feedback', [FeedbackController::class, 'show'])->name('projects.feedback');
+        Route::post('projects/{project}/feedback', [FeedbackController::class, 'store'])->name('projects.feedback.store');
 
         Route::get('messages', [ConversationController::class, 'index'])->name('messages.index');
         Route::get('messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');

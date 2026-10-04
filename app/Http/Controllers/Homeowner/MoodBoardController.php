@@ -3,23 +3,39 @@
 namespace App\Http\Controllers\Homeowner;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreDesignFeedbackRequest;
+use App\Http\Requests\Homeowner\StoreMoodBoardItemRequest;
 use App\Models\Project;
 use App\Services\ActivityLogService;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class MoodBoardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         Gate::authorize('viewAny', Project::class);
 
-        $projects = request()->user()->projects()->with('moodBoard.author')->latest()->get();
+        $owned = $request->user()->projects()->orderBy('name')->get();
+        $selected = $request->integer('project');
 
-        return view('homeowner.mood-board.index', ['projects' => $projects]);
+        if ($selected > 0 && ! $owned->contains('id', $selected)) {
+            abort(404);
+        }
+
+        $boards = $request->user()->projects()
+            ->with(['moodBoard.items', 'moodBoard.author.professionalProfile', 'designer.professionalProfile'])
+            ->when($selected > 0, fn ($query) => $query->where('id', $selected))
+            ->orderBy('name')
+            ->get();
+
+        return view('homeowner.mood-board.index', [
+            'projects' => $owned,
+            'boards' => $boards,
+            'selected' => $selected,
+        ]);
     }
 
     public function show(Project $project): View
@@ -31,31 +47,47 @@ class MoodBoardController extends Controller
         return view('homeowner.mood-board.show', ['project' => $project]);
     }
 
-    public function feedback(StoreDesignFeedbackRequest $request, Project $project, ActivityLogService $activity): RedirectResponse
+    public function storeItem(StoreMoodBoardItemRequest $request, ActivityLogService $activity): RedirectResponse
     {
-        $board = $project->moodBoard;
-        abort_unless($board !== null, 404);
+        $project = $request->project();
+        abort_unless($project !== null, 404);
 
-        $path = null;
-        if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('projects/'.$project->id.'/feedback', 'local');
-        }
-
-        $board->feedback()->create([
-            'user_id' => $request->user()->id,
-            'title' => $request->string('title')->toString(),
-            'comment' => $request->string('comment')->toString(),
-            'attachment' => $path,
+        $board = $project->moodBoard()->firstOrCreate([], [
+            'created_by' => $project->designer_id ?? $request->user()->id,
+            'title' => 'Design Mood Board',
+            'summary' => 'Inspiration collected for '.$project->name.'.',
+            'version' => 1,
         ]);
 
-        $activity->record($project, $request->user(), 'design.feedback', 'Design feedback was added to the mood board.');
+        $colour = $request->string('colour')->toString();
+        if ($colour !== '' && ! str_starts_with($colour, '#')) {
+            $colour = '#'.$colour;
+        }
 
-        return back()->with('status', 'Design feedback sent.');
+        $board->items()->create([
+            'kind' => $request->string('kind')->toString(),
+            'title' => $request->string('title')->toString(),
+            'body' => $request->string('body')->toString() ?: null,
+            'colour' => $colour !== '' ? $colour : null,
+            'image' => $request->hasFile('image')
+                ? $request->file('image')->store('mood-boards/'.$board->id, 'public')
+                : null,
+        ]);
+
+        $activity->record($project, $request->user(), 'moodboard.inspiration', 'Inspiration was added to the mood board.');
+
+        return back()->with('status', 'Inspiration added.');
+    }
+
+    public function feedback(): RedirectResponse
+    {
+        // Designer and contractor ratings belong on the completed Feedback tab.
+        abort(403);
     }
 
     public function approve(Project $project, ActivityLogService $activity, NotificationService $notifications): RedirectResponse
     {
-        Gate::authorize('update', $project);
+        Gate::authorize('contribute', $project);
 
         $board = $project->moodBoard;
         abort_unless($board !== null, 404);

@@ -73,6 +73,7 @@ class ChangeRequestDemoSeeder extends Seeder
             'category' => $category,
             'priority' => 'normal',
             'status' => $status,
+            'approved_at' => in_array($status, [ChangeRequest::STATUS_APPROVED, ChangeRequest::STATUS_IMPLEMENTED], true) ? now()->subMonths(2) : null,
             'contractor_response' => $cost === null ? null : 'The cost impact is included.',
             'designer_response' => 'The change still fits the approved direction.',
             'cost_impact' => $cost,

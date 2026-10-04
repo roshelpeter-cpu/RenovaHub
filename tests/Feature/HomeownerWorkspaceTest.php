@@ -601,4 +601,167 @@ class HomeownerWorkspaceTest extends TestCase
             ->assertSee('Secret task')
             ->assertDontSee('Install kitchen cabinets');
     }
+
+    public function test_completed_projects_are_read_only_and_open_projects_keep_homeowner_actions(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create(['role' => 'homeowner']);
+        $designer = User::factory()->create(['role' => 'designer', 'name' => 'Amaya Senarath']);
+        $contractor = User::factory()->create(['role' => 'contractor', 'name' => 'Lanka Build Co']);
+        $completed = Project::factory()->for($owner, 'homeowner')->create([
+            'name' => 'Green Valley Residence',
+            'description' => 'A finished house.',
+            'status' => Project::STATUS_COMPLETED,
+            'designer_id' => $designer->id,
+            'contractor_id' => $contractor->id,
+            'cover_image' => 'images/renova/about-exterior.jpg',
+        ]);
+        $active = Project::factory()->for($owner, 'homeowner')->create([
+            'name' => 'Apartment Interior Makeover',
+            'description' => 'Work in progress.',
+            'status' => Project::STATUS_IN_PROGRESS,
+            'designer_id' => $designer->id,
+            'contractor_id' => $contractor->id,
+        ]);
+        $quotation = $active->quotations()->create([
+            'contractor_id' => $contractor->id,
+            'number' => 'Q-900',
+            'description' => 'Kitchen package',
+            'materials' => 100,
+            'labour' => 50,
+            'additional_costs' => 0,
+            'discount' => 0,
+            'subtotal' => 150,
+            'total' => 150,
+            'status' => Quotation::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($owner)->get(route('homeowner.projects.show', $completed))
+            ->assertOk()
+            ->assertSee('Feedback')
+            ->assertDontSee('Design Process')
+            ->assertDontSee(route('homeowner.projects.payments', $completed, false));
+
+        $this->actingAs($owner)->get(route('homeowner.projects.show', $active))
+            ->assertOk()
+            ->assertDontSee('>Feedback<');
+
+        $this->actingAs($owner)->get(route('homeowner.projects.documents', $completed))
+            ->assertOk()
+            ->assertDontSee('Upload Document');
+
+        $this->actingAs($owner)->post(route('homeowner.projects.documents.store', $completed), [
+            'name' => 'Late file',
+            'category' => 'contracts',
+            'file' => UploadedFile::fake()->create('late.pdf', 20, 'application/pdf'),
+        ])->assertForbidden();
+
+        $this->actingAs($owner)->get(route('homeowner.projects.documents', $active))
+            ->assertOk()
+            ->assertSee('Upload Document');
+
+        $this->actingAs($owner)->get(route('homeowner.projects.change-requests', $completed))
+            ->assertOk()
+            ->assertDontSee('Submit Change Request');
+
+        $this->actingAs($owner)->post(route('homeowner.projects.change-requests.store', $completed), [
+            'title' => 'Too late',
+            'description' => 'This should be rejected.',
+            'category' => 'material',
+            'priority' => 'normal',
+        ])->assertForbidden();
+
+        $this->actingAs($owner)->get(route('homeowner.projects.mood-board', $completed))
+            ->assertOk()
+            ->assertDontSee('Add Inspiration')
+            ->assertDontSee('Design feedback');
+
+        $this->actingAs($owner)->post(route('homeowner.projects.mood-board.items.store', $completed), [
+            'kind' => 'note',
+            'title' => 'Too late',
+        ])->assertForbidden();
+
+        $this->actingAs($owner)->get(route('homeowner.projects.mood-board', $active))
+            ->assertOk()
+            ->assertSee('Add Inspiration');
+
+        $this->actingAs($owner)->get(route('homeowner.projects.feedback', $active))->assertNotFound();
+        $this->actingAs($owner)->get(route('homeowner.projects.feedback', $completed))
+            ->assertOk()
+            ->assertSee('Designer Feedback')
+            ->assertSee('Contractor Feedback');
+
+        $this->actingAs($owner)->post(route('homeowner.projects.feedback.store', $completed), [
+            'role' => 'designer',
+            'rating' => 5,
+            'title' => 'Clear design',
+            'comment' => 'The rooms feel calm.',
+        ])->assertRedirect();
+        $this->assertDatabaseHas('project_feedback', [
+            'project_id' => $completed->id,
+            'role' => 'designer',
+            'professional_id' => $designer->id,
+        ]);
+
+        $this->actingAs($owner)->post(route('projects.tasks.store', $active), [
+            'name' => 'Homeowner task',
+            'category' => 'construction',
+        ])->assertForbidden();
+
+        $this->actingAs($contractor)->post(route('projects.tasks.store', $active), [
+            'name' => 'Install kitchen cabinets',
+            'category' => 'construction',
+            'description' => 'Fit the joinery.',
+        ])->assertRedirect();
+        $this->assertDatabaseHas('project_tasks', [
+            'project_id' => $active->id,
+            'name' => 'Install kitchen cabinets',
+        ]);
+
+        $this->actingAs($owner)->post(route('homeowner.quotations.decide', [$active, $quotation]), [
+            'decision' => 'approved',
+        ])->assertRedirect();
+        $this->assertSame(Quotation::STATUS_APPROVED, $quotation->fresh()->status);
+        $this->assertDatabaseHas('payments', [
+            'project_id' => $active->id,
+            'quotation_id' => $quotation->id,
+            'status' => Payment::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($owner)->get(route('homeowner.quotations.index'))
+            ->assertOk()
+            ->assertDontSee('Request New Quotation');
+
+        $this->actingAs($owner)->get(route('homeowner.payments.index'))
+            ->assertOk()
+            ->assertSee('Payments')
+            ->assertSee('RenovaHub service fee')
+            ->assertSee('Apartment Interior Makeover');
+    }
+
+    public function test_a_user_can_delete_only_their_own_message(): void
+    {
+        $owner = User::factory()->create(['role' => 'homeowner']);
+        $other = User::factory()->create(['role' => 'designer']);
+        $conversation = Conversation::query()->create(['kind' => 'professional']);
+        $conversation->participants()->attach([$owner->id, $other->id]);
+        $mine = $conversation->messages()->create(['sender_id' => $owner->id, 'body' => 'My note']);
+        $theirs = $conversation->messages()->create(['sender_id' => $other->id, 'body' => 'Their note']);
+
+        \Livewire\Livewire::actingAs($owner)
+            ->test(\App\Livewire\MessagesInbox::class, ['conversationId' => $conversation->id])
+            ->call('askDelete', $theirs->id)
+            ->assertForbidden();
+
+        $this->assertNotSoftDeleted('conversation_messages', ['id' => $theirs->id]);
+
+        \Livewire\Livewire::actingAs($owner)
+            ->test(\App\Livewire\MessagesInbox::class, ['conversationId' => $conversation->id])
+            ->call('askDelete', $mine->id)
+            ->call('deleteMessage')
+            ->assertDontSee('My note');
+
+        $this->assertSoftDeleted('conversation_messages', ['id' => $mine->id]);
+        $this->assertNotSoftDeleted('conversation_messages', ['id' => $theirs->id]);
+    }
 }

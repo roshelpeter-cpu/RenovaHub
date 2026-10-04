@@ -156,6 +156,11 @@ class Project extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(ProjectFeedback::class);
+    }
+
     public function activity(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
@@ -444,6 +449,15 @@ class Project extends Model
     public function isCompleted(): bool
     {
         return $this->status === self::STATUS_COMPLETED;
+    }
+
+    /**
+     * Completed and archived projects stay readable as history.
+     * New documents, inspiration, change requests and tasks stop here.
+     */
+    public function isClosedRecord(): bool
+    {
+        return in_array($this->status, [self::STATUS_COMPLETED, self::STATUS_ARCHIVED], true);
     }
 
     /**

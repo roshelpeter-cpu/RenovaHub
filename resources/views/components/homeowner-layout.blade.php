@@ -14,6 +14,7 @@
         ['label' => 'Quotations', 'href' => route('homeowner.quotations.index'), 'active' => request()->routeIs('homeowner.quotations.index')],
         ['label' => 'Change Requests', 'href' => route('homeowner.change-requests.index'), 'active' => request()->routeIs('homeowner.change-requests.index')],
         ['label' => 'Messages', 'href' => route('homeowner.messages.index'), 'active' => request()->routeIs('homeowner.messages.*') && ! $onProject],
+        ['label' => 'Payments', 'href' => route('homeowner.payments.index'), 'active' => request()->routeIs('homeowner.payments.index')],
     ];
 @endphp
 
@@ -44,9 +45,9 @@
                     </span>
                 </a>
 
-                <nav class="hidden min-w-0 flex-1 items-center justify-center lg:flex" aria-label="Homeowner">
+                <nav class="hidden min-w-0 flex-1 items-center justify-center overflow-x-auto lg:flex" aria-label="Homeowner">
                     @foreach ($links as $item)
-                        <a href="{{ $item['href'] }}" class="relative whitespace-nowrap px-2.5 py-2 text-[13px] transition {{ $item['active'] ? 'font-medium text-[#123D2B]' : 'text-[#66756C] hover:text-[#123D2B]' }}" @if($item['active']) aria-current="page" @endif>
+                        <a href="{{ $item['href'] }}" class="relative shrink-0 whitespace-nowrap px-1.5 py-2 text-[12px] transition xl:px-2 xl:text-[13px] {{ $item['active'] ? 'font-medium text-[#123D2B]' : 'text-[#66756C] hover:text-[#123D2B]' }}" @if($item['active']) aria-current="page" @endif>
                             {{ $item['label'] }}
                             @if ($item['active'])
                                 <span class="absolute inset-x-2.5 -bottom-[0.65rem] h-0.5 rounded-full bg-[#123D2B]"></span>

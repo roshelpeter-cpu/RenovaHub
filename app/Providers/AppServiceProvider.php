@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\Models\ProfessionalProfile;
 use App\Models\Project;
+use App\Policies\ConversationMessagePolicy;
 use App\Policies\ConversationPolicy;
 use App\Policies\ProfessionalProfilePolicy;
 use App\Policies\ProjectPolicy;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(ProfessionalProfile::class, ProfessionalProfilePolicy::class);
         Gate::policy(Conversation::class, ConversationPolicy::class);
+        Gate::policy(ConversationMessage::class, ConversationMessagePolicy::class);
 
         Event::listen(ProjectInvitationResponded::class, [RecordWorkspaceActivity::class, 'handleInvitation']);
         Event::listen(QuotationDecided::class, [RecordWorkspaceActivity::class, 'handleQuotation']);

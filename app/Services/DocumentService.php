@@ -20,7 +20,7 @@ class DocumentService
      */
     public function globalIndex(User $homeowner, array $filters): array
     {
-        $projects = $homeowner->projects()->orderBy('name')->get(['id', 'name', 'city', 'cover_image']);
+        $projects = $homeowner->projects()->orderBy('name')->get(['id', 'name', 'city', 'cover_image', 'status']);
         $ownedIds = $projects->pluck('id');
 
         $base = Document::query()->whereIn('project_id', $ownedIds);

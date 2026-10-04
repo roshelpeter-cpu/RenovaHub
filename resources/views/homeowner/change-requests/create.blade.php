@@ -1,5 +1,6 @@
-<x-homeowner-layout title="New Change Request">
-    <h1 class="font-serif text-3xl text-forest">New change request</h1>
+<x-homeowner-layout title="New Change Request" :flush="true" :canvas="true">
+    <x-project-context :project="$project" section="change-requests">
+    <h1 class="font-serif text-3xl text-forest">Submit Change Request</h1>
     <p class="mt-2 text-sm text-mist">{{ $project->name }}</p>
     <form method="POST" action="{{ route('homeowner.projects.change-requests.store', $project) }}" enctype="multipart/form-data" class="mt-6 max-w-2xl space-y-4 rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
         @csrf
@@ -22,4 +23,5 @@
         <div><label for="attachment" class="mb-1 block text-sm">Attachment</label><input id="attachment" name="attachment" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" class="text-sm"></div>
         <button class="rounded-full bg-forest px-5 py-3 text-sm font-medium text-ivory">Submit change request</button>
     </form>
+    </x-project-context>
 </x-homeowner-layout>

@@ -63,7 +63,7 @@
         </ul>
     </aside>
 
-    <section class="{{ $selected ? 'flex' : 'hidden lg:flex' }} min-w-0 flex-1 flex-col">
+    <section class="{{ $selected ? 'flex' : 'hidden lg:flex' }} relative min-w-0 flex-1 flex-col">
         @if ($selected)
             @php
                 $peer = $selected->counterpart(auth()->user());
@@ -125,10 +125,13 @@
                                     @endforeach
                                 </div>
                             @endif
-                            <p class="mt-1 text-right text-[11px] text-[#66756C]">
+                            <p class="mt-1 flex items-center justify-end gap-2 text-[11px] text-[#66756C]">
+                                @if ($mine)
+                                    <button type="button" wire:click="askDelete({{ $message->id }})" class="font-medium text-[#123D2B] hover:underline">Delete</button>
+                                @endif
                                 {{ $message->created_at->format('g:i A') }}
                                 @if ($mine)
-                                    <span class="ml-1 text-[#2F6B49]">✓✓</span>
+                                    <span class="text-[#2F6B49]">✓✓</span>
                                 @endif
                             </p>
                         </div>
@@ -155,6 +158,18 @@
                     <p class="mt-2 text-xs text-[#66756C]">{{ count($photos) }} photo{{ count($photos) === 1 ? '' : 's' }} ready to send.</p>
                 @endif
             </form>
+            @if ($confirmingDeleteId)
+                <div class="absolute inset-0 z-10 flex items-center justify-center bg-[#123D2B]/30 px-4">
+                    <div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl" role="dialog" aria-labelledby="delete-message-title">
+                        <h2 id="delete-message-title" class="font-serif text-2xl text-[#123D2B]">Delete message?</h2>
+                        <p class="mt-2 text-sm text-[#66756C]">This removes the message you sent. Other people's messages stay in the conversation.</p>
+                        <div class="mt-5 flex justify-center gap-3">
+                            <button type="button" wire:click="cancelDelete" class="rounded-full border border-[#ece7dc] px-5 py-2 text-sm text-[#123D2B]">Cancel</button>
+                            <button type="button" wire:click="deleteMessage" class="rounded-full bg-[#123D2B] px-5 py-2 text-sm font-medium text-white">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @else
             <div class="flex flex-1 items-center justify-center text-sm text-[#66756C]">Select a conversation to start messaging.</div>
         @endif

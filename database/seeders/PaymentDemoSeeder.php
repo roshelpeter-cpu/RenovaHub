@@ -25,15 +25,20 @@ class PaymentDemoSeeder extends Seeder
             $quotation = $project->quotations()->where('status', 'approved')->first();
             $paid = $project->status === 'completed' ? (float) $project->current_budget : 400000;
 
+            $fee = round($paid * (Payment::FEE_PERCENT / 100), 2);
             $project->payments()->create([
                 'quotation_id' => $quotation?->id,
                 'reference' => 'RH-PAY-'.$sequence++,
                 'amount' => $paid,
+                'renovation_amount' => $paid,
+                'platform_fee' => $fee,
+                'fee_percent' => Payment::FEE_PERCENT,
                 'currency' => 'LKR',
                 'method' => 'Bank transfer',
                 'status' => Payment::STATUS_PAID,
+                'provider_reference' => null,
                 'paid_at' => $project->expected_start_date,
-                'notes' => 'Recorded inside RenovaHub. No card details are stored.',
+                'notes' => 'Recorded inside RenovaHub. PayHere was not called.',
             ]);
         }
 
@@ -42,6 +47,9 @@ class PaymentDemoSeeder extends Seeder
             'quotation_id' => $villa->quotations()->where('status', 'approved')->first()?->id,
             'reference' => 'RH-PAY-'.$sequence,
             'amount' => 150000,
+            'renovation_amount' => 150000,
+            'platform_fee' => 3000,
+            'fee_percent' => Payment::FEE_PERCENT,
             'currency' => 'LKR',
             'method' => null,
             'status' => Payment::STATUS_PENDING,

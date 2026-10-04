@@ -1,5 +1,5 @@
-<x-homeowner-layout :title="$quotation->number">
-    @include('homeowner.projects.partials.tabs', ['project' => $project])
+<x-homeowner-layout :title="$quotation->number" :flush="true" :canvas="true">
+    <x-project-context :project="$project" section="quotations">
     <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm sm:p-6">
             <p class="text-xs uppercase tracking-[0.14em] text-olive">{{ $quotation->number }} · {{ $quotation->statusLabel() }}</p>
@@ -24,7 +24,7 @@
             </dl>
             @if ($quotation->notes)<p class="mt-4 text-sm text-mist">{{ $quotation->notes }}</p>@endif
         </section>
-        @if ($quotation->status === 'pending' || $quotation->status === 'clarification_required')
+        @can('update', $quotation)
             <form method="POST" action="{{ route('homeowner.quotations.decide', [$project, $quotation]) }}" class="h-fit rounded-3xl border border-[#ece7dc] bg-[#F6F1E7] p-5">
                 @csrf
                 <h2 class="font-serif text-xl text-forest">Your decision</h2>
@@ -36,6 +36,7 @@
                     <button name="decision" value="rejected" class="rounded-full border border-red-200 px-4 py-2 text-sm text-red-700">Reject</button>
                 </div>
             </form>
-        @endif
+        @endcan
     </div>
+    </x-project-context>
 </x-homeowner-layout>

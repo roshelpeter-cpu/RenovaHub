@@ -10,6 +10,9 @@
         [$count('Quotations', (int) $project->quotations_count), route('homeowner.projects.quotations', $project), request()->routeIs('homeowner.quotations.show', 'homeowner.projects.quotations')],
         [$count('Change Requests', (int) $project->change_requests_count), route('homeowner.projects.change-requests', $project), request()->routeIs('homeowner.change-requests.show', 'homeowner.change-requests.create', 'homeowner.projects.change-requests*')],
     ];
+    if ($project->isCompleted()) {
+        $tabs[] = ['Feedback', route('homeowner.projects.feedback', $project), request()->routeIs('homeowner.projects.feedback')];
+    }
 @endphp
 <nav class="mt-8 flex gap-6 overflow-x-auto border-b border-[#ece7dc] text-sm" aria-label="Project sections">
     @foreach ($tabs as [$label, $href, $active])

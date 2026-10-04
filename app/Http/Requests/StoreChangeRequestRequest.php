@@ -12,7 +12,7 @@ class StoreChangeRequestRequest extends FormRequest
     {
         $project = $this->route('project');
 
-        return $project !== null && ($this->user()?->can('update', $project) ?? false);
+        return $project !== null && ($this->user()?->can('create', [\App\Models\ChangeRequest::class, $project]) ?? false);
     }
 
     /**

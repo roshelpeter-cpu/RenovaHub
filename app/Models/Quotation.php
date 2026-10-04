@@ -65,6 +65,21 @@ class Quotation extends Model
         return $this->hasMany(QuotationItem::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function reviewLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_CLARIFICATION => 'In Review',
+            default => 'Pending',
+        };
+    }
+
     public function statusLabel(): string
     {
         if (is_string($this->notes) && $this->notes !== '') {

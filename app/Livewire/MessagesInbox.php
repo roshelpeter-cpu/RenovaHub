@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Conversation;
+use App\Models\ConversationMessage;
 use App\Services\ConversationService;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -25,6 +26,8 @@ class MessagesInbox extends Component
      */
     public array $photos = [];
 
+    public ?int $confirmingDeleteId = null;
+
     public function mount(?int $conversationId = null): void
     {
         Gate::authorize('viewAny', \App\Models\Project::class);
@@ -40,6 +43,28 @@ class MessagesInbox extends Component
         $this->authorize('view', $conversation);
         $this->selectedId = $id;
         app(ConversationService::class)->markRead(auth()->user(), $conversation);
+    }
+
+    public function askDelete(int $messageId): void
+    {
+        $message = ConversationMessage::query()->findOrFail($messageId);
+        $this->authorize('delete', $message);
+        $this->confirmingDeleteId = $message->id;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->confirmingDeleteId = null;
+    }
+
+    public function deleteMessage(ConversationService $conversations): void
+    {
+        abort_if($this->confirmingDeleteId === null, 422);
+
+        $message = ConversationMessage::query()->findOrFail($this->confirmingDeleteId);
+        $this->authorize('delete', $message);
+        $conversations->deleteMessage(auth()->user(), $message);
+        $this->confirmingDeleteId = null;
     }
 
     public function send(ConversationService $conversations): void

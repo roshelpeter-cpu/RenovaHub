@@ -19,7 +19,7 @@ class StoreGlobalDocumentRequest extends FormRequest
 
         $project = $user->projects()->find($projectId);
 
-        return $project !== null && $user->can('update', $project);
+        return $project !== null && $user->can('contribute', $project);
     }
 
     /**

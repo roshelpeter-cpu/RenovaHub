@@ -14,10 +14,6 @@ class MoodBoardDemoSeeder extends Seeder
         foreach ($homeowner->projects as $project) {
             $project->moodBoard()?->delete();
 
-            // Ongoing projects keep an empty mood-board tab until the designer publishes direction.
-            if ($project->status === 'in_progress') {
-                continue;
-            }
             $board = $project->moodBoard()->create([
                 'created_by' => $project->designer_id,
                 'title' => $project->name.' direction',
@@ -26,27 +22,56 @@ class MoodBoardDemoSeeder extends Seeder
                 'approved_at' => $project->name === 'Lakeview Villa Renovation' ? null : ($project->status === 'completed' ? $project->actual_completion_date : now()->subWeek()),
             ]);
 
+            $palette = $project->status === 'completed'
+                ? [
+                    ['colour', 'Warm White', null, '#F8F6F1'],
+                    ['colour', 'Olive Green', null, '#8A7A5B'],
+                    ['colour', 'Walnut Brown', null, '#3E3A36'],
+                    ['colour', 'Beige', null, '#D7C9B1'],
+                    ['colour', 'Charcoal', null, '#3E3E3E'],
+                    ['material', 'Oak Wood', null, '#C4A574'],
+                    ['material', 'Travertine Stone', null, '#E6D7C3'],
+                    ['material', 'Matte Black', null, '#2C2C2C'],
+                    ['material', 'Natural Stone', null, '#D9D2C5'],
+                    ['material', 'Brushed Brass', null, '#C6A15B'],
+                ]
+                : [
+                    ['colour', 'Warm Beige', null, '#F3EFE7'],
+                    ['colour', 'Sage Green', null, '#A7B89F'],
+                    ['colour', 'Terracotta', null, '#C97B5B'],
+                    ['colour', 'Warm Grey', null, '#C9C3B6'],
+                    ['colour', 'Black', null, '#212121'],
+                    ['material', 'Light Oak', null, '#D7B48A'],
+                    ['material', 'Concrete Finish', null, '#D5D2CC'],
+                    ['material', 'Rattan', null, '#C6A36A'],
+                    ['material', 'Matte White', null, '#F7F4EE'],
+                    ['material', 'Brushed Brass', null, '#C6A15B'],
+                ];
+
             foreach ([
-                ['image', 'Living inspiration', 'images/renova/about-interior.jpg', null, 'A calm seating arrangement.'],
-                ['image', 'Material sample', 'images/renova/feature-green.jpg', null, 'Planting and stone.'],
-                ['colour', 'Sage wall', null, '#DCE7D8', 'Main wall colour.'],
-                ['colour', 'Timber', null, '#8C6239', 'Joinery tone.'],
-                ['note', 'Lighting', null, null, 'Warm lamps, no cool downlights in the living room.'],
-            ] as [$kind, $title, $image, $colour, $body]) {
+                ['inspiration', 'Living room', 'images/renova/about-interior.jpg'],
+                ['inspiration', 'Exterior', 'images/renova/about-exterior.jpg'],
+                ['inspiration', 'Daylight', 'images/renova/hero.jpg'],
+                ['inspiration', 'Garden', 'images/renova/feature-green.jpg'],
+                ['inspiration', 'Detail', 'images/renova/feature-collab.jpg'],
+                ['furniture', 'Sofa', 'images/renova/about-interior.jpg'],
+                ['furniture', 'Dining Table', 'images/renova/feature-plans.jpg'],
+                ['furniture', 'Pendant Light', 'images/renova/feature-notes.jpg'],
+            ] as [$kind, $title, $image]) {
+                $board->items()->create([
+                    'kind' => $kind,
+                    'title' => $title,
+                    'image' => $image,
+                    'body' => $title.' reference for '.$project->name.'.',
+                ]);
+            }
+
+            foreach ($palette as [$kind, $title, $image, $colour]) {
                 $board->items()->create([
                     'kind' => $kind,
                     'title' => $title,
                     'image' => $image,
                     'colour' => $colour,
-                    'body' => $body,
-                ]);
-            }
-
-            if ($project->name === 'Lakeview Villa Renovation') {
-                $board->feedback()->create([
-                    'user_id' => $homeowner->id,
-                    'title' => 'Living Room - Revision 02',
-                    'comment' => 'Please keep the warmer timber and the open seating arrangement.',
                 ]);
             }
         }
