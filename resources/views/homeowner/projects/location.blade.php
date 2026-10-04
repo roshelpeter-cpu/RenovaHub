@@ -56,8 +56,8 @@
 
         <aside class="rounded-3xl border border-dashed border-olive/50 bg-sand/50 p-5 sm:p-6" aria-label="Location preview">
             <p class="text-[11px] font-medium uppercase tracking-[0.16em] text-olive">Location preview</p>
-            <h2 class="mt-2 font-serif text-2xl text-forest">Map area</h2>
-            <p class="mt-2 text-sm leading-relaxed text-mist">This space is reserved for a map. Address suggestions and coordinates will come from a location provider later. Nothing here is a live map.</p>
+            <h2 class="mt-2 font-serif text-2xl text-forest">Map preview will appear here</h2>
+            <p class="mt-2 text-sm leading-relaxed text-mist">Google Places integration will be connected here. You can still save the address, city, province and optional coordinates.</p>
             <dl class="mt-5 space-y-3 text-sm">
                 <div>
                     <dt class="text-mist">Address</dt>

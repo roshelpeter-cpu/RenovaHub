@@ -23,6 +23,22 @@ class ProjectProgress extends Model
 
     public function label(): string
     {
-        return ucfirst($this->stage);
+        return match ($this->stage) {
+            'inspection' => 'Final Inspection',
+            default => ucfirst($this->stage),
+        };
+    }
+
+    public function homeStatus(): string
+    {
+        if ($this->percent >= 100) {
+            return 'Completed';
+        }
+
+        if ($this->percent <= 0) {
+            return 'Not Started';
+        }
+
+        return $this->percent.'%';
     }
 }

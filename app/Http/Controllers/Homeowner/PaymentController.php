@@ -30,7 +30,7 @@ class PaymentController extends Controller
         Gate::authorize('view', $project);
 
         return view('homeowner.payments.index', [
-            'payments' => $project->payments()->latest()->paginate(12),
+            'payments' => $project->payments()->with('project')->latest()->paginate(12),
             'project' => $project,
             'summary' => $this->summary(collect([$project->id])),
         ]);

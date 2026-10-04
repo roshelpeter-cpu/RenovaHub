@@ -8,7 +8,7 @@
     </div>
 
     <div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <form method="POST" action="{{ route('homeowner.projects.store') }}" class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm sm:p-6">
+        <form method="POST" action="{{ route('homeowner.projects.store') }}" enctype="multipart/form-data" class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm sm:p-6">
             @csrf
             <x-validation-errors class="mb-5" />
 
@@ -26,6 +26,20 @@
                 @error('description')
                     <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <div class="mt-5">
+                <label for="requirements" class="mb-2 block text-sm font-medium text-charcoal">Project requirements</label>
+                <textarea id="requirements" name="requirements" rows="4" maxlength="5000" class="block w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-forest focus:ring-4 focus:ring-forest/10">{{ old('requirements') }}</textarea>
+            </div>
+            <div class="mt-5">
+                <label for="additional_instructions" class="mb-2 block text-sm font-medium text-charcoal">Additional instructions</label>
+                <textarea id="additional_instructions" name="additional_instructions" rows="3" maxlength="5000" class="block w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-forest focus:ring-4 focus:ring-forest/10">{{ old('additional_instructions') }}</textarea>
+            </div>
+            <div class="mt-5">
+                <label for="reference_images" class="mb-2 block text-sm font-medium text-charcoal">Reference images</label>
+                <input id="reference_images" name="reference_images[]" type="file" accept="image/jpeg,image/png,image/webp" multiple class="block w-full text-sm text-charcoal">
+                <p class="mt-1 text-xs text-mist">JPG, PNG or WebP. Up to six images.</p>
             </div>
 
             <fieldset class="mt-6">

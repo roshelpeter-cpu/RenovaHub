@@ -207,9 +207,12 @@ class Project extends Model
     }
 
     /**
+     * Display order for the five progress stages.
+     * This is separate from the progressStages() relationship.
+     *
      * @return list<string>
      */
-    public static function progressStages(): array
+    public static function stageOrder(): array
     {
         return ['design', 'planning', 'procurement', 'construction', 'inspection'];
     }
@@ -231,13 +234,31 @@ class Project extends Model
 
     public function locationLabel(): ?string
     {
-        $parts = array_values(array_filter([$this->city, $this->province]));
+        $province = $this->province;
+
+        if ($province && ! str_contains(strtolower($province), 'province')) {
+            $province .= ' Province';
+        }
+
+        $parts = array_values(array_filter([$this->city, $province]));
 
         if ($parts !== []) {
             return implode(', ', $parts);
         }
 
         return $this->address;
+    }
+
+    /**
+     * Compact LKR label for summary tiles. Exact amounts stay on the project cards.
+     */
+    public static function compactMoney(float $amount): string
+    {
+        if ($amount >= 1000000) {
+            return 'LKR '.number_format($amount / 1000000, 1).'M';
+        }
+
+        return 'LKR '.number_format($amount, 0);
     }
 
     public function expectedDurationLabel(): ?string
@@ -307,6 +328,6 @@ class Project extends Model
     {
         $stages = $this->relationLoaded('progressStages') ? $this->progressStages : $this->progressStages()->get();
 
-        return $stages->sortBy(fn (ProjectProgress $stage) => array_search($stage->stage, self::progressStages(), true));
+        return $stages->sortBy(fn (ProjectProgress $stage) => array_search($stage->stage, self::stageOrder(), true));
     }
 }

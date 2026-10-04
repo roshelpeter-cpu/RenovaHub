@@ -47,7 +47,7 @@ class DocumentController extends Controller
         Gate::authorize('view', $project);
 
         return view('homeowner.documents.index', [
-            'documents' => $project->documents()->with('uploader')->latest()->paginate(12),
+            'documents' => $project->documents()->with(['uploader', 'project'])->latest()->paginate(12),
             'project' => $project,
             'category' => '',
             'search' => '',

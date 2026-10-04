@@ -29,6 +29,13 @@
                     @error('expected_completion_date') <p class="mt-1 text-sm text-red-700">{{ $message }}</p> @enderror
                 </div>
             </div>
+            <div class="mt-4">
+                <label for="timeline_notes" class="mb-2 block text-sm font-medium text-charcoal">Timeline notes</label>
+                <textarea id="timeline_notes" name="timeline_notes" rows="4" maxlength="2000" class="block w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-forest focus:ring-4 focus:ring-forest/10">{{ old('timeline_notes', $project->timeline_notes) }}</textarea>
+            </div>
+            @if ($project->expectedDurationLabel())
+                <p class="mt-4 text-sm text-charcoal">Estimated duration: {{ $project->expectedDurationLabel() }}</p>
+            @endif
             <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
                 <a href="{{ route('homeowner.projects.location', $project) }}" class="rounded-full border border-[#ddd6c8] px-5 py-3 text-sm font-medium text-charcoal transition hover:border-forest">Back</a>
                 <button type="submit" class="rounded-full bg-forest px-5 py-3 text-sm font-medium text-ivory transition duration-300 hover:bg-leaf">Save and continue</button>
@@ -37,9 +44,7 @@
         <aside class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
             <h2 class="font-serif text-xl text-forest">Budget Guidance</h2>
             <ul class="mt-3 space-y-2 text-sm leading-relaxed text-mist">
-                <li>This is your expected project budget.</li>
-                <li>The contractor will prepare a detailed project budget later.</li>
-                <li>You can adjust the budget as your project progresses.</li>
+                <li>The budget you enter is your initial project estimate. Final construction costs will be provided through contractor quotations.</li>
             </ul>
         </aside>
     </form>

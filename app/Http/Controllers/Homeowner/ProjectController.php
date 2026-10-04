@@ -31,6 +31,10 @@ class ProjectController extends Controller
         'payments',
     ];
 
+    /**
+     * My Projects is a browsing catalogue, not another dashboard.
+     * Counts come from every owned project so filters never fake the summary tiles.
+     */
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', Project::class);
@@ -38,9 +42,18 @@ class ProjectController extends Controller
         $status = $request->string('status')->toString();
         $filtering = array_key_exists($status, Project::statuses());
         $search = trim($request->string('search')->toString());
-
         $type = $request->string('type')->toString();
         $sort = $request->string('sort')->toString();
+        $sorts = ['newest', 'oldest', 'budget_high', 'budget_low', 'progress', 'budget'];
+
+        $owned = $request->user()->projects();
+        $summary = [
+            'total' => (clone $owned)->count(),
+            'in_progress' => (clone $owned)->where('status', Project::STATUS_IN_PROGRESS)->count(),
+            'planning' => (clone $owned)->where('status', Project::STATUS_PLANNING)->count(),
+            'completed' => (clone $owned)->where('status', Project::STATUS_COMPLETED)->count(),
+            'value' => (float) (clone $owned)->sum('estimated_budget'),
+        ];
 
         $projects = $request->user()
             ->projects()
@@ -49,23 +62,39 @@ class ProjectController extends Controller
             ->when(array_key_exists($type, Project::renovationTypes()), fn ($query) => $query->where('renovation_type', $type))
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%'.addcslashes($search, '%_\\').'%';
-                $query->where(function ($inner) use ($term) {
-                    $inner->where('name', 'like', $term)->orWhere('city', 'like', $term);
+                $typeKeys = collect(Project::renovationTypes())
+                    ->filter(fn (string $label) => str_contains(strtolower($label), strtolower($search)))
+                    ->keys();
+                $query->where(function ($inner) use ($term, $typeKeys) {
+                    $inner->where('name', 'like', $term)
+                        ->orWhere('city', 'like', $term)
+                        ->orWhere('province', 'like', $term)
+                        ->orWhere('address', 'like', $term)
+                        ->orWhere('description', 'like', $term)
+                        ->orWhere('renovation_type', 'like', $term)
+                        ->orWhereIn('renovation_type', $typeKeys);
                 });
             })
             ->when($sort === 'oldest', fn ($query) => $query->oldest())
             ->when($sort === 'progress', fn ($query) => $query->orderByDesc('progress'))
-            ->when($sort === 'budget', fn ($query) => $query->orderByDesc('estimated_budget'))
-            ->when(! in_array($sort, ['oldest', 'progress', 'budget'], true), fn ($query) => $query->latest())
-            ->paginate(9)
+            ->when(in_array($sort, ['budget', 'budget_high'], true), fn ($query) => $query->orderByDesc('estimated_budget'))
+            ->when($sort === 'budget_low', fn ($query) => $query->orderBy('estimated_budget'))
+            ->when(! in_array($sort, ['oldest', 'progress', 'budget', 'budget_high', 'budget_low'], true), fn ($query) => $query->latest())
+            ->paginate(12)
             ->withQueryString();
+
+        $projects->getCollection()->each(function (Project $project) {
+            $project->designer?->professionalProfile?->setRelation('user', $project->designer);
+            $project->contractor?->professionalProfile?->setRelation('user', $project->contractor);
+        });
 
         return view('homeowner.projects.index', [
             'projects' => $projects,
-            'status' => $filtering ? $status : null,
+            'summary' => $summary,
+            'status' => $filtering ? $status : 'all',
             'search' => $search,
             'type' => array_key_exists($type, Project::renovationTypes()) ? $type : null,
-            'sort' => in_array($sort, ['oldest', 'progress', 'budget'], true) ? $sort : 'newest',
+            'sort' => in_array($sort, $sorts, true) ? ($sort === 'budget' ? 'budget_high' : $sort) : 'newest',
         ]);
     }
 
@@ -135,6 +164,19 @@ class ProjectController extends Controller
         ]);
     }
 
+    /**
+     * Full project history stays on its own tab so the overview remains a summary.
+     */
+    public function activity(Project $project): View
+    {
+        Gate::authorize('view', $project);
+
+        return view('homeowner.projects.activity', [
+            'project' => $project,
+            'entries' => $project->activity()->with('user')->latest()->paginate(20),
+        ]);
+    }
+
     public function edit(Project $project): View
     {
         Gate::authorize('update', $project);
@@ -150,6 +192,14 @@ class ProjectController extends Controller
             $project,
             $request->safe()->only(['name', 'description', 'requirements', 'additional_instructions', 'renovation_type', 'property_type']),
         );
+
+        if ($request->exists('address') || $request->exists('city')) {
+            $projects->updateLocation($project, $request->safe()->only(['address', 'city', 'province', 'postal_code']));
+        }
+
+        if ($request->exists('estimated_budget') || $request->exists('expected_start_date')) {
+            $projects->updateBudget($project, $request->safe()->only(['estimated_budget', 'expected_start_date', 'expected_completion_date', 'timeline_notes']));
+        }
 
         return redirect()
             ->route('homeowner.projects.show', $project)

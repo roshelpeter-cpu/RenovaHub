@@ -38,8 +38,9 @@ class NotificationController extends Controller
         $record->markAsRead();
 
         $url = $record->data['url'] ?? null;
+        $safe = is_string($url) && (str_starts_with($url, url('/')) || str_starts_with($url, '/'));
 
-        return $url ? redirect($url) : back();
+        return $safe ? redirect($url) : back();
     }
 
     public function readAll(Request $request): RedirectResponse

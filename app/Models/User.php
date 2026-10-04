@@ -87,6 +87,11 @@ class User extends Authenticatable
         return $this->hasOne(ProfessionalProfile::class);
     }
 
+    public function professionalFavourites(): HasMany
+    {
+        return $this->hasMany(ProfessionalFavourite::class);
+    }
+
     public function isDesigner(): bool
     {
         return $this->role === 'designer';

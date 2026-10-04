@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Homeowner;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 
 class SectionController extends Controller
 {
@@ -14,26 +14,24 @@ class SectionController extends Controller
      * @var array<string, string>
      */
     public const SECTIONS = [
-        'tasks' => 'Tasks',
-        'documents' => 'Documents',
-        'mood-board' => 'Mood Board',
-        'quotations' => 'Quotations',
-        'change-requests' => 'Change Requests',
-        'payments' => 'Payments',
-        'notifications' => 'Notifications',
+        'tasks' => 'homeowner.tasks.index',
+        'documents' => 'homeowner.documents.index',
+        'mood-board' => 'homeowner.mood-board.index',
+        'quotations' => 'homeowner.quotations.index',
+        'change-requests' => 'homeowner.change-requests.index',
+        'payments' => 'homeowner.payments.index',
+        'notifications' => 'homeowner.notifications.index',
     ];
 
     /**
-     * Show a clear unavailable state instead of sample records.
+     * Older sidebar links now open the real workspace pages.
      */
-    public function show(string $section): View
+    public function show(string $section): RedirectResponse
     {
         Gate::authorize('viewAny', \App\Models\Project::class);
 
         abort_unless(array_key_exists($section, self::SECTIONS), 404);
 
-        return view('homeowner.upcoming', [
-            'title' => self::SECTIONS[$section],
-        ]);
+        return redirect()->route(self::SECTIONS[$section]);
     }
 }

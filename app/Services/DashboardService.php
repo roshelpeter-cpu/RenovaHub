@@ -7,140 +7,135 @@ use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Quotation;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class DashboardService
 {
     /**
-     * The dashboard is an operations summary.
-     * Project cards stay on My Projects so the two pages do not repeat each other.
+     * Home is a magazine-style overview. Counts and the active card come from
+     * owned projects so a posted user_id cannot change what is shown.
      *
      * @return array<string, mixed>
      */
-    public function overview(User $homeowner): array
+    public function home(User $homeowner): array
     {
         $projects = $homeowner->projects()
             ->with(['progressStages', 'designer.professionalProfile', 'contractor.professionalProfile'])
             ->latest()
             ->get();
 
-        $projectIds = $projects->pluck('id');
+        $active = $projects->first(fn (Project $project) => $project->status === Project::STATUS_IN_PROGRESS && $project->name === 'Modern Villa Renovation')
+            ?? $projects->firstWhere('status', Project::STATUS_IN_PROGRESS)
+            ?? $projects->first();
 
-        $pendingQuotations = Quotation::query()
-            ->whereIn('project_id', $projectIds)
-            ->where('status', Quotation::STATUS_PENDING)
-            ->with('project')
-            ->latest()
-            ->get();
-
-        $openChanges = ChangeRequest::query()
-            ->whereIn('project_id', $projectIds)
-            ->whereIn('status', ChangeRequest::openStatuses())
-            ->with('project')
-            ->latest()
-            ->get();
-
-        $pendingPayments = Payment::query()
-            ->whereIn('project_id', $projectIds)
-            ->where('status', Payment::STATUS_PENDING)
-            ->with('project')
-            ->latest()
-            ->get();
-
-        $unreadMessages = $homeowner->projects()
-            ->with(['messages' => function ($query) use ($homeowner) {
-                $query->whereNull('read_at')->where('sender_id', '!=', $homeowner->id)->latest();
-            }])
-            ->get()
-            ->flatMap(fn (Project $project) => $project->messages->each(fn ($message) => $message->setRelation('project', $project)));
+        if ($active !== null) {
+            $active->designer?->professionalProfile?->setRelation('user', $active->designer);
+            $active->contractor?->professionalProfile?->setRelation('user', $active->contractor);
+        }
 
         return [
-            'counts' => [
-                'active' => $projects->where('status', Project::STATUS_IN_PROGRESS)->count(),
-                'quotations' => $pendingQuotations->count(),
-                'payments' => $pendingPayments->count(),
-                'changes' => $openChanges->count(),
-                'messages' => $unreadMessages->count(),
+            'firstName' => str($homeowner->name)->before(' ')->upper()->toString(),
+            'greeting' => now()->hour < 12 ? 'Good morning' : (now()->hour < 17 ? 'Good afternoon' : 'Good evening'),
+            'summary' => [
+                'total' => $projects->count(),
+                'in_progress' => $projects->where('status', Project::STATUS_IN_PROGRESS)->count(),
+                'completed' => $projects->where('status', Project::STATUS_COMPLETED)->count(),
+                'value' => (float) $projects->sum(fn (Project $project) => (float) $project->estimated_budget),
             ],
-            'attention' => $this->attention($pendingQuotations, $openChanges, $pendingPayments, $unreadMessages),
-            'projects' => $projects,
-            'activity' => $homeowner->projects()
-                ->with('activity')
-                ->get()
-                ->flatMap->activity
-                ->sortByDesc('created_at')
-                ->take(8)
-                ->values(),
-            'milestones' => $homeowner->projects()
-                ->with('milestones')
-                ->get()
-                ->flatMap->milestones
-                ->whereNull('completed_at')
-                ->sortBy('due_on')
-                ->take(5)
-                ->values(),
-            'upcomingPayments' => $pendingPayments->take(4),
-            'finance' => [
-                'budget' => (float) $projects->sum(fn (Project $project) => (float) $project->estimated_budget),
-                'approved' => (float) Quotation::query()->whereIn('project_id', $projectIds)->where('status', Quotation::STATUS_APPROVED)->sum('total'),
-                'paid' => (float) Payment::query()->whereIn('project_id', $projectIds)->where('status', Payment::STATUS_PAID)->sum('amount'),
-                'outstanding' => max(0, (float) Quotation::query()->whereIn('project_id', $projectIds)->where('status', Quotation::STATUS_APPROVED)->sum('total')
-                    - (float) Payment::query()->whereIn('project_id', $projectIds)->where('status', Payment::STATUS_PAID)->sum('amount')),
-            ],
+            'activeProject' => $active,
+            'activityGroups' => $this->activityGroups($homeowner),
+            'actions' => $this->homeActions($homeowner),
         ];
     }
 
     /**
-     * @return Collection<int, array<string, string>>
+     * @return array<string, mixed>
      */
-    private function attention(Collection $quotations, Collection $changes, Collection $payments, Collection $messages): Collection
+    public function overview(User $homeowner): array
     {
+        return $this->home($homeowner);
+    }
+
+    /**
+     * @return Collection<int, array{label: string, items: Collection}>
+     */
+    private function activityGroups(User $homeowner): Collection
+    {
+        $entries = $homeowner->projects()
+            ->with(['activity' => fn ($query) => $query->latest()->limit(8)])
+            ->get()
+            ->flatMap->activity
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values();
+
+        return $entries->groupBy(function ($entry) {
+            $date = Carbon::parse($entry->created_at)->startOfDay();
+
+            if ($date->isToday()) {
+                return 'Today';
+            }
+
+            if ($date->isYesterday()) {
+                return 'Yesterday';
+            }
+
+            return $date->format('j M Y');
+        });
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function homeActions(User $homeowner): Collection
+    {
+        $projectIds = $homeowner->projects()->select('id');
         $items = collect();
 
-        foreach ($quotations as $quotation) {
+        foreach (Quotation::query()->whereIn('project_id', $projectIds)->where('status', Quotation::STATUS_PENDING)->with('project')->latest()->get() as $quotation) {
             $items->push([
+                'icon' => 'quote',
                 'title' => 'Quotation awaiting approval',
-                'project' => $quotation->project->name,
-                'body' => $quotation->number.' from the contractor is waiting for your decision.',
-                'time' => $quotation->created_at->diffForHumans(),
-                'action' => 'Review',
+                'body' => $quotation->description,
+                'amount' => 'LKR '.number_format((float) $quotation->total, 0),
                 'url' => route('homeowner.quotations.show', [$quotation->project, $quotation]),
             ]);
         }
 
-        foreach ($changes as $change) {
-            $items->push([
-                'title' => 'Change request awaiting your decision',
-                'project' => $change->project->name,
-                'body' => $change->title,
-                'time' => $change->created_at->diffForHumans(),
-                'action' => 'Open',
-                'url' => route('homeowner.change-requests.show', [$change->project, $change]),
-            ]);
+        foreach ($homeowner->projects()->with('moodBoard.feedback')->get() as $project) {
+            $feedback = $project->moodBoard?->feedback?->first();
+            if ($feedback && $project->moodBoard?->approved_at === null) {
+                $items->push([
+                    'icon' => 'design',
+                    'title' => 'Design awaiting approval',
+                    'body' => $feedback->title,
+                    'amount' => null,
+                    'url' => route('homeowner.projects.mood-board', $project),
+                ]);
+            }
         }
 
-        foreach ($payments as $payment) {
+        foreach (Payment::query()->whereIn('project_id', $projectIds)->where('status', Payment::STATUS_PENDING)->with('project')->latest()->get() as $payment) {
             $items->push([
-                'title' => 'Payment due',
-                'project' => $payment->project->name,
-                'body' => $payment->reference.' is still outstanding.',
-                'time' => $payment->created_at->diffForHumans(),
-                'action' => 'View',
+                'icon' => 'pay',
+                'title' => 'Payment pending',
+                'body' => $payment->notes ?: $payment->project->name,
+                'amount' => 'LKR '.number_format((float) $payment->amount, 0),
                 'url' => route('homeowner.payments.show', [$payment->project, $payment]),
             ]);
         }
 
-        foreach ($messages->take(4) as $message) {
+        foreach (ChangeRequest::query()->whereIn('project_id', $projectIds)->whereIn('status', ChangeRequest::openStatuses())->with('project')->latest()->get() as $change) {
             $items->push([
-                'title' => 'New project message',
-                'project' => $message->project->name,
-                'body' => str($message->body)->limit(90)->toString(),
-                'time' => $message->created_at->diffForHumans(),
-                'action' => 'Reply',
-                'url' => route('homeowner.projects.messages', $message->project),
+                'icon' => 'change',
+                'title' => 'Change request',
+                'body' => $change->title,
+                'amount' => null,
+                'url' => route('homeowner.change-requests.show', [$change->project, $change]),
             ]);
         }
 
-        return $items->take(6)->values();
+        return $items->take(4)->values();
     }
 }

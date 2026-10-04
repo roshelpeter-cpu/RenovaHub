@@ -1,111 +1,96 @@
 <x-homeowner-layout :title="$project->name">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-            <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-olive">Project</p>
-            <div class="mt-2 flex flex-wrap items-center gap-3">
-                <h1 class="font-serif text-3xl font-medium tracking-[-0.03em] text-forest sm:text-4xl">{{ $project->name }}</h1>
-                <span class="rounded-full bg-[#e7f0e4] px-3 py-1 text-xs font-medium text-forest">{{ $project->statusLabel() }}</span>
+    <div class="overflow-hidden rounded-3xl border border-[#ece7dc] bg-white shadow-sm">
+        @if ($project->coverUrl())
+            <img src="{{ $project->coverUrl() }}" alt="{{ $project->name }}" class="h-56 w-full object-cover sm:h-72">
+        @endif
+        <div class="flex flex-col gap-4 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-olive">{{ $project->locationLabel() ?: 'Location not added' }}</p>
+                <div class="mt-2 flex flex-wrap items-center gap-3">
+                    <h1 class="font-serif text-3xl font-medium tracking-[-0.03em] text-forest sm:text-4xl">{{ $project->name }}</h1>
+                    <span class="rounded-full bg-[#e7f0e4] px-3 py-1 text-xs font-medium text-forest">{{ $project->statusLabel() }}</span>
+                </div>
             </div>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('homeowner.projects.edit', $project) }}" class="rounded-full border border-forest px-4 py-2 text-sm font-medium text-forest transition hover:bg-forest hover:text-ivory">Edit Project</a>
-            @include('homeowner.projects.partials.delete-form', ['project' => $project, 'buttonLabel' => 'Delete Project', 'class' => 'rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50'])
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('homeowner.projects.edit', $project) }}" class="rounded-full border border-forest px-4 py-2 text-sm font-medium text-forest transition hover:bg-forest hover:text-ivory">Edit Project</a>
+                @include('homeowner.projects.partials.delete-form', ['project' => $project, 'buttonLabel' => 'Delete Project'])
+            </div>
         </div>
     </div>
 
-    <nav class="mt-6 flex gap-2 overflow-x-auto pb-1" aria-label="Project sections">
-        @foreach ([
-            'overview' => 'Overview',
-            'tasks' => 'Tasks',
-            'documents' => 'Documents',
-            'mood-board' => 'Mood Board',
-            'quotations' => 'Quotations',
-            'change-requests' => 'Change Requests',
-            'payments' => 'Payments',
-        ] as $key => $label)
-            <a href="{{ route('homeowner.projects.show', ['project' => $project, 'tab' => $key]) }}" class="shrink-0 rounded-full px-4 py-2 text-sm transition {{ $tab === $key ? 'bg-forest text-ivory' : 'bg-white text-charcoal hover:text-forest' }}" @if($tab === $key) aria-current="page" @endif>{{ $label }}</a>
-        @endforeach
-    </nav>
+    @include('homeowner.projects.partials.tabs', ['project' => $project])
 
-    @if ($tab !== 'overview')
-        <div class="mt-6 rounded-3xl border border-dashed border-olive/40 bg-white px-6 py-10">
-            <h2 class="font-serif text-2xl text-forest">{{ ucfirst(str_replace('-', ' ', $tab)) }}</h2>
-            <p class="mt-2 max-w-xl text-sm text-mist">This section is not available yet. It will be added in a later stage, so there is nothing to show here.</p>
-        </div>
-    @else
-        <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.8fr)]">
-            <section class="overflow-hidden rounded-3xl border border-[#ece7dc] bg-white shadow-sm">
-                @if ($project->cover_image)
-                    <img src="{{ asset($project->cover_image) }}" alt="{{ $project->name }}" class="h-56 w-full object-cover sm:h-72">
-                @endif
-                <div class="p-5 sm:p-6">
-                    <h2 class="font-serif text-2xl text-forest">Project details</h2>
-                    <p class="mt-3 text-sm leading-relaxed text-charcoal">{{ $project->description }}</p>
-                    <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-                        <div>
-                            <dt class="text-mist">Location</dt>
-                            <dd class="font-medium">{{ $project->locationLabel() ?: 'Not added' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-mist">Renovation</dt>
-                            <dd class="font-medium">{{ $project->renovationTypeLabel() }} · {{ $project->propertyTypeLabel() }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-mist">Dates</dt>
-                            <dd class="font-medium">
-                                @if ($project->expected_start_date && $project->expected_completion_date)
-                                    {{ $project->expected_start_date->format('j M Y') }} – {{ $project->expected_completion_date->format('j M Y') }}
-                                @else
-                                    Not set
-                                @endif
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-mist">Budget</dt>
-                            <dd class="font-medium">{{ $project->estimated_budget !== null ? 'LKR '.number_format((float) $project->estimated_budget, 0) : 'Not set' }}</dd>
-                        </div>
-                    </dl>
-                </div>
+    <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(16rem,0.7fr)]">
+        <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm sm:p-6">
+            <h2 class="font-serif text-2xl text-forest">Project details</h2>
+            <p class="mt-3 text-sm leading-relaxed text-charcoal">{{ $project->description }}</p>
+            @if ($project->requirements)
+                <h3 class="mt-5 text-sm font-medium text-forest">Requirements</h3>
+                <p class="mt-1 text-sm leading-relaxed text-charcoal">{{ $project->requirements }}</p>
+            @endif
+            <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+                <div><dt class="text-mist">Location</dt><dd class="font-medium">{{ $project->locationLabel() ?: 'Not added' }}</dd></div>
+                <div><dt class="text-mist">Renovation</dt><dd class="font-medium">{{ $project->renovationTypeLabel() }} · {{ $project->propertyTypeLabel() }}</dd></div>
+                <div><dt class="text-mist">Dates</dt><dd class="font-medium">@if($project->expected_start_date){{ $project->expected_start_date->format('j M Y') }} – {{ $project->actual_completion_date?->format('j M Y') ?? $project->expected_completion_date?->format('j M Y') ?? 'Open' }}@else Not set @endif</dd></div>
+                <div><dt class="text-mist">Initial budget</dt><dd class="font-medium">{{ $project->money($project->estimated_budget) }}</dd></div>
+                <div><dt class="text-mist">Current budget</dt><dd class="font-medium">{{ $project->money($project->current_budget) }}</dd></div>
+                <div><dt class="text-mist">Paid / outstanding</dt><dd class="font-medium">LKR {{ number_format($project->paidAmount(), 2) }} / LKR {{ number_format($project->outstandingAmount(), 2) }}</dd></div>
+            </dl>
+        </section>
+
+        <div class="space-y-4">
+            <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
+                <h2 class="font-serif text-xl text-forest">Progress</h2>
+                <p class="mt-2 font-serif text-4xl text-forest">{{ $project->progress ?? 0 }}%</p>
+                <ul class="mt-4 space-y-3">
+                    @forelse ($project->orderedProgress() as $stage)
+                        <li>
+                            <div class="flex justify-between text-xs uppercase tracking-[0.12em] text-mist"><span>{{ $stage->label() }}</span><span>{{ $stage->percent }}%</span></div>
+                            <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-sand" role="progressbar" aria-valuenow="{{ $stage->percent }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full bg-forest" style="width: {{ $stage->percent }}%"></div></div>
+                        </li>
+                    @empty
+                        <li class="text-sm text-mist">Stage progress has not been recorded yet.</li>
+                    @endforelse
+                </ul>
             </section>
 
-            <div class="space-y-4">
-                <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
-                    <h2 class="font-serif text-xl text-forest">Project progress</h2>
-                    @if ($project->progress !== null)
-                        <p class="mt-3 font-serif text-4xl text-forest">{{ $project->progress }}%</p>
-                        <div class="mt-3 h-2 overflow-hidden rounded-full bg-sand" role="progressbar" aria-valuenow="{{ $project->progress }}" aria-valuemin="0" aria-valuemax="100" aria-label="Project progress">
-                            <div class="h-full rounded-full bg-forest" style="width: {{ $project->progress }}%"></div>
-                        </div>
-                    @else
-                        <p class="mt-3 text-sm text-mist">Progress has not been set.</p>
-                    @endif
-                </section>
-
-                <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
-                    <h2 class="font-serif text-xl text-forest">Project team</h2>
-                    <div class="mt-4 space-y-4 text-sm">
-                        <div>
-                            <p class="text-mist">Designer</p>
-                            @if ($project->designer)
-                                <p class="font-medium text-charcoal">{{ $project->designer->professionalProfile?->displayName() ?? $project->designer->name }}</p>
-                                <a href="{{ route('homeowner.professionals.show', $project->designer) }}" class="text-forest hover:underline">View Portfolio</a>
-                            @else
-                                <p class="text-charcoal">Not selected</p>
-                            @endif
-                        </div>
-                        <div>
-                            <p class="text-mist">Contractor</p>
-                            @if ($project->contractor)
-                                <p class="font-medium text-charcoal">{{ $project->contractor->professionalProfile?->displayName() ?? $project->contractor->name }}</p>
-                                <a href="{{ route('homeowner.professionals.show', $project->contractor) }}" class="text-forest hover:underline">View Portfolio</a>
-                            @else
-                                <p class="text-charcoal">Not selected</p>
-                            @endif
-                        </div>
+            <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
+                <h2 class="font-serif text-xl text-forest">Project team</h2>
+                @foreach (['designer' => 'Designer', 'contractor' => 'Contractor'] as $role => $roleLabel)
+                    @php $member = $project->{$role}; $invite = $project->latestInvitation($role); @endphp
+                    <div class="mt-4">
+                        <p class="text-xs uppercase tracking-[0.14em] text-mist">{{ $roleLabel }}</p>
+                        @if ($member)
+                            <p class="font-medium text-charcoal">{{ $member->professionalProfile?->displayName() ?? $member->name }}</p>
+                            <p class="text-sm text-mist">{{ $invite?->status ? ucfirst($invite->status) : 'Selected' }}</p>
+                            <a href="{{ route('homeowner.professionals.show', ['professional' => $member, 'project' => $project->id]) }}" class="text-sm text-forest hover:underline">View Profile</a>
+                        @else
+                            <p class="text-sm text-charcoal">Not selected</p>
+                        @endif
                     </div>
-                    <a href="{{ route('homeowner.projects.team', $project) }}" class="mt-4 inline-flex text-sm font-medium text-forest hover:underline">Change team</a>
-                </section>
-            </div>
+                @endforeach
+                <a href="{{ route('homeowner.projects.team', $project) }}" class="mt-4 inline-flex text-sm font-medium text-forest hover:underline">Change team</a>
+            </section>
         </div>
-    @endif
+    </div>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+        <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
+            <h2 class="font-serif text-xl text-forest">Upcoming milestones</h2>
+            @php $openMilestones = $project->milestones->whereNull('completed_at'); @endphp
+            @forelse ($openMilestones as $milestone)
+                <p class="mt-3 text-sm text-charcoal">{{ $milestone->title }} <span class="text-mist">· {{ $milestone->due_on?->format('j M Y') }}</span></p>
+            @empty
+                <p class="mt-3 text-sm text-mist">No open milestones.</p>
+            @endforelse
+        </section>
+        <section class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm">
+            <h2 class="font-serif text-xl text-forest">Recent activity</h2>
+            @forelse ($project->activity->sortByDesc('created_at')->take(6) as $entry)
+                <p class="mt-3 text-sm text-charcoal">{{ $entry->description }} <span class="text-mist">· {{ $entry->created_at->format('j M') }}</span></p>
+            @empty
+                <p class="mt-3 text-sm text-mist">No activity yet.</p>
+            @endforelse
+        </section>
+    </div>
 </x-homeowner-layout>

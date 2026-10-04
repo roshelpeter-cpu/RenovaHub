@@ -34,7 +34,7 @@ class QuotationController extends Controller
         Gate::authorize('view', $project);
 
         return view('homeowner.quotations.index', [
-            'quotations' => $project->quotations()->with('contractor.professionalProfile')->latest()->paginate(10),
+            'quotations' => $project->quotations()->with(['contractor.professionalProfile', 'project'])->latest()->paginate(10),
             'project' => $project,
         ]);
     }

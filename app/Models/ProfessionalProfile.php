@@ -24,6 +24,12 @@ class ProfessionalProfile extends Model
         'completed_projects_count',
         'rating',
         'starting_price',
+        'listed',
+        'featured',
+        'verified',
+        'review_count',
+        'tags',
+        'cover_path',
     ];
 
     /**
@@ -36,6 +42,11 @@ class ProfessionalProfile extends Model
             'completed_projects_count' => 'integer',
             'rating' => 'decimal:1',
             'starting_price' => 'decimal:2',
+            'listed' => 'boolean',
+            'featured' => 'boolean',
+            'verified' => 'boolean',
+            'review_count' => 'integer',
+            'tags' => 'array',
         ];
     }
 
@@ -57,6 +68,29 @@ class ProfessionalProfile extends Model
     public function portfolioItems(): HasMany
     {
         return $this->hasMany(PortfolioItem::class);
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(ProfessionalService::class);
+    }
+
+    public function favourites(): HasMany
+    {
+        return $this->hasMany(ProfessionalFavourite::class);
+    }
+
+    public function coverUrl(): ?string
+    {
+        return $this->cover_path ? asset($this->cover_path) : $this->avatarUrl();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function tagList(): array
+    {
+        return $this->tags ?? [];
     }
 
     public function displayName(): string

@@ -1,0 +1,51 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Payment;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+
+class PaymentDemoSeeder extends Seeder
+{
+    /**
+     * One pending kitchen milestone keeps Action Required aligned with the home screenshot.
+     */
+    public function run(): void
+    {
+        $homeowner = User::query()->where('email', 'homeowner@test.com')->firstOrFail();
+        $sequence = 1000;
+
+        foreach ($homeowner->projects as $project) {
+            $project->payments()->delete();
+        }
+
+        foreach ($homeowner->projects as $project) {
+            $project->payments()->delete();
+            $quotation = $project->quotations()->where('status', 'approved')->first();
+            $paid = $project->status === 'completed' ? (float) $project->current_budget : 400000;
+
+            $project->payments()->create([
+                'quotation_id' => $quotation?->id,
+                'reference' => 'RH-PAY-'.$sequence++,
+                'amount' => $paid,
+                'currency' => 'LKR',
+                'method' => 'Bank transfer',
+                'status' => Payment::STATUS_PAID,
+                'paid_at' => $project->expected_start_date,
+                'notes' => 'Recorded inside RenovaHub. No card details are stored.',
+            ]);
+        }
+
+        $villa = $homeowner->projects()->where('name', 'Modern Villa Renovation')->firstOrFail();
+        $villa->payments()->create([
+            'quotation_id' => $villa->quotations()->where('status', 'approved')->first()?->id,
+            'reference' => 'RH-PAY-'.$sequence,
+            'amount' => 150000,
+            'currency' => 'LKR',
+            'method' => null,
+            'status' => Payment::STATUS_PENDING,
+            'notes' => 'Kitchen installation milestone',
+        ]);
+    }
+}

@@ -1,21 +1,12 @@
-@props(['title' => 'Dashboard'])
+@props(['title' => 'Home', 'flush' => false])
 
 @php
-    $navigation = [
-        ['label' => 'Dashboard', 'href' => route('dashboard'), 'active' => request()->routeIs('dashboard'), 'icon' => 'home'],
-        ['label' => 'My Projects', 'href' => route('homeowner.projects.index'), 'active' => request()->routeIs('homeowner.projects.*'), 'icon' => 'folder'],
-        ['label' => 'Tasks', 'href' => route('homeowner.sections.show', 'tasks'), 'active' => request()->route('section') === 'tasks', 'icon' => 'check'],
-        ['label' => 'Documents', 'href' => route('homeowner.sections.show', 'documents'), 'active' => request()->route('section') === 'documents', 'icon' => 'doc'],
-        ['label' => 'Mood Board', 'href' => route('homeowner.sections.show', 'mood-board'), 'active' => request()->route('section') === 'mood-board', 'icon' => 'image'],
-        ['label' => 'Quotations', 'href' => route('homeowner.sections.show', 'quotations'), 'active' => request()->route('section') === 'quotations', 'icon' => 'file'],
-        ['label' => 'Change Requests', 'href' => route('homeowner.sections.show', 'change-requests'), 'active' => request()->route('section') === 'change-requests', 'icon' => 'edit'],
-        ['label' => 'Payments', 'href' => route('homeowner.sections.show', 'payments'), 'active' => request()->route('section') === 'payments', 'icon' => 'card'],
-        ['label' => 'Notifications', 'href' => route('homeowner.sections.show', 'notifications'), 'active' => request()->route('section') === 'notifications', 'icon' => 'bell'],
-    ];
-
-    $account = [
-        ['label' => 'Profile', 'href' => route('profile.show'), 'active' => request()->routeIs('profile.show'), 'icon' => 'user'],
-        ['label' => 'Settings', 'href' => route('profile.show'), 'active' => false, 'icon' => 'cog'],
+    $navCounts = $navCounts ?? ['messages' => 0, 'notifications' => 0];
+    $user = auth()->user();
+    $links = [
+        ['label' => 'Home', 'href' => route('homeowner.home'), 'active' => request()->routeIs('homeowner.home', 'dashboard')],
+        ['label' => 'My Projects', 'href' => route('homeowner.projects.index'), 'active' => request()->routeIs('homeowner.projects.*')],
+        ['label' => 'Explore', 'href' => route('homeowner.explore'), 'active' => request()->routeIs('homeowner.explore', 'homeowner.professionals.*')],
     ];
 @endphp
 
@@ -29,100 +20,87 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=fraunces:500,600|outfit:400,500,600&display=swap" rel="stylesheet" />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @livewireStyles
     </head>
-    <body class="bg-cream font-outfit text-charcoal antialiased">
-        <div class="min-h-screen lg:flex">
-            <input id="homeowner-menu" type="checkbox" class="peer sr-only">
+    <body class="min-h-screen bg-white font-outfit text-charcoal antialiased">
+        <input id="homeowner-menu" type="checkbox" class="peer/menu sr-only">
 
-            <div class="flex items-center justify-between bg-forest px-4 py-4 text-ivory lg:hidden">
-                <x-brand-logo href="{{ route('dashboard') }}" tone="light" />
-                <label for="homeowner-menu" class="inline-flex cursor-pointer items-center rounded-full border border-white/25 px-3 py-2 text-sm">Menu</label>
-            </div>
+        <header class="sticky top-0 z-40 border-b border-[#ece7dc] bg-white/95 backdrop-blur-md">
+            <div class="mx-auto flex max-w-[88rem] items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+                <a href="{{ route('homeowner.home') }}" class="flex items-center gap-2.5 text-[#123D2B]">
+                    <svg viewBox="0 0 32 32" class="h-7 w-7" fill="currentColor" aria-hidden="true">
+                        <path d="M16 3.2 3.4 14.1a1.2 1.2 0 0 0-.4.9V27.2A2.3 2.3 0 0 0 5.3 29.5h6.2v-8.1c0-.7.6-1.3 1.3-1.3h6.4c.7 0 1.3.6 1.3 1.3v8.1h6.2a2.3 2.3 0 0 0 2.3-2.3V15a1.2 1.2 0 0 0-.4-.9L16 3.2Z"/>
+                    </svg>
+                    <span>
+                        <span class="block font-outfit text-[1.05rem] font-semibold leading-none tracking-[-0.02em]">RenovaHub</span>
+                        <span class="mt-1 block text-[10px] tracking-[0.04em] text-[#66756C]">Plan · Design · Build · Together</span>
+                    </span>
+                </a>
 
-            <aside class="hidden w-full bg-forest text-ivory peer-checked:flex peer-checked:max-h-[calc(100vh-4.5rem)] peer-checked:flex-col peer-checked:overflow-y-auto lg:flex lg:min-h-screen lg:w-[17rem] lg:shrink-0 lg:flex-col">
-                <div class="hidden px-5 py-6 lg:block">
-                    <x-brand-logo href="{{ route('dashboard') }}" tone="light" />
-                </div>
-
-                <nav class="space-y-1 px-3 pb-4" aria-label="Homeowner">
-                    @foreach ($navigation as $item)
-                        <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition duration-300 {{ $item['active'] ? 'bg-white/15 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white' }}" @if($item['active']) aria-current="page" @endif>
-                            <span class="inline-flex h-5 w-5 shrink-0" aria-hidden="true">
-                                @switch($item['icon'])
-                                    @case('home')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg>
-                                        @break
-                                    @case('folder')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 7.5h6l2 2h9v9.5h-17Z"/></svg>
-                                        @break
-                                    @case('check')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 6h11M8 12h11M8 18h11"/><path d="m4 6 1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>
-                                        @break
-                                    @case('doc')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3.5h7l4 4V20.5H7Z"/><path d="M14 3.5V8h4"/></svg>
-                                        @break
-                                    @case('image')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="m8 15 2.5-2.5L14 16l2-2 2 2"/></svg>
-                                        @break
-                                    @case('file')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3.5h8l4 4V20.5H7Z"/><path d="M9 13h6M9 17h4"/></svg>
-                                        @break
-                                    @case('edit')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4l11-11-4-4L4 16v4Z"/></svg>
-                                        @break
-                                    @case('card')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
-                                        @break
-                                    @case('bell')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 16.2V10a6 6 0 1 1 12 0v6.2l1.4 2.2H4.6L6 16.2Z"/></svg>
-                                        @break
-                                    @case('user')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 19a7 7 0 0 1 14 0"/></svg>
-                                        @break
-                                    @default
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>
-                                @endswitch
-                            </span>
+                <nav class="hidden flex-1 items-center justify-center gap-1 md:flex" aria-label="Homeowner">
+                    @foreach ($links as $item)
+                        <a href="{{ $item['href'] }}" class="relative px-4 py-2 text-sm transition duration-300 {{ $item['active'] ? 'font-medium text-[#123D2B]' : 'text-[#66756C] hover:text-[#123D2B]' }}" @if($item['active']) aria-current="page" @endif>
                             {{ $item['label'] }}
+                            @if ($item['active'])
+                                <span class="absolute inset-x-4 -bottom-[0.7rem] h-0.5 rounded-full bg-[#123D2B]"></span>
+                            @endif
                         </a>
                     @endforeach
                 </nav>
 
-                <div class="mt-auto border-t border-white/10 px-3 py-4">
-                    <nav class="space-y-1" aria-label="Account">
-                        @foreach ($account as $item)
-                            <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition duration-300 {{ $item['active'] ? 'bg-white/15 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white' }}" @if($item['active']) aria-current="page" @endif>
-                                <span class="inline-flex h-5 w-5 shrink-0" aria-hidden="true">
-                                    @if ($item['icon'] === 'user')
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 19a7 7 0 0 1 14 0"/></svg>
-                                    @else
-                                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>
-                                    @endif
-                                </span>
-                                {{ $item['label'] }}
-                            </a>
-                        @endforeach
-                    </nav>
-                </div>
-
-                <div class="border-t border-white/10 px-4 py-4">
-                    <p class="truncate text-sm font-medium">{{ auth()->user()->name }}</p>
-                    <p class="truncate text-xs text-white/60">Homeowner</p>
-                    <form method="POST" action="{{ route('logout') }}" class="mt-3">
-                        @csrf
-                        <button type="submit" class="text-sm text-white/80 underline-offset-2 transition hover:text-white hover:underline">Log out</button>
+                <div class="ml-auto flex items-center gap-2 sm:gap-3">
+                    <form method="GET" action="{{ route('homeowner.explore') }}" class="relative hidden lg:block">
+                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[#66756C]">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.2-3.2"/></svg>
+                        </span>
+                        <label class="sr-only" for="nav-search">Search</label>
+                        <input id="nav-search" name="search" type="search" placeholder="Search..." class="w-52 rounded-full border border-[#ece7dc] bg-[#F7F4EE] py-2 pl-9 pr-4 text-sm outline-none focus:border-forest">
                     </form>
-                </div>
-            </aside>
 
-            <div class="min-w-0 flex-1">
-                <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                    @session('status')
-                        <div class="mb-5 rounded-2xl border border-line bg-sand/70 px-4 py-3 text-sm text-forest" role="status">{{ $value }}</div>
-                    @endsession
-                    {{ $slot }}
-                </main>
+                    <a href="{{ route('homeowner.notifications.index') }}" class="relative flex h-10 w-10 items-center justify-center rounded-full text-[#123D2B] hover:bg-[#F6F1E7]" aria-label="Notifications">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 16.2V10a6 6 0 1 1 12 0v6.2l1.4 2.2H4.6L6 16.2Z"/></svg>
+                        @if (($navCounts['notifications'] ?? 0) > 0)
+                            <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#123D2B]"></span>
+                        @endif
+                    </a>
+
+                    <details class="relative">
+                        <summary class="flex cursor-pointer list-none items-center gap-2 rounded-full py-1 pl-1 pr-2 marker:content-none hover:bg-[#F6F1E7] [&::-webkit-details-marker]:hidden">
+                            <img src="{{ $user->profile_photo_url }}" alt="" class="h-9 w-9 rounded-full object-cover">
+                            <span class="hidden text-left sm:block">
+                                <span class="block text-sm font-medium leading-tight text-[#123D2B]">{{ $user->name }}</span>
+                                <span class="block text-xs text-[#66756C]">Homeowner</span>
+                            </span>
+                            <svg viewBox="0 0 20 20" class="hidden h-4 w-4 text-[#66756C] sm:block" fill="currentColor" aria-hidden="true"><path d="M5.5 7.5 10 12l4.5-4.5"/></svg>
+                        </summary>
+                        <div class="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-2xl border border-[#ece7dc] bg-white py-1 text-sm shadow-lg">
+                            <a href="{{ route('homeowner.profile.edit') }}" class="block px-4 py-2 hover:bg-[#F6F1E7]">Profile</a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="block w-full px-4 py-2 text-left hover:bg-[#F6F1E7]">Log out</button>
+                            </form>
+                        </div>
+                    </details>
+
+                    <label for="homeowner-menu" class="inline-flex cursor-pointer items-center rounded-full border border-[#ddd6c8] px-3 py-2 text-sm text-[#123D2B] md:hidden">Menu</label>
+                </div>
             </div>
-        </div>
+
+            <nav class="hidden border-t border-[#ece7dc] px-4 py-3 peer-checked/menu:block md:hidden" aria-label="Homeowner mobile">
+                @foreach ($links as $item)
+                    <a href="{{ $item['href'] }}" class="block rounded-xl px-3 py-2 text-sm {{ $item['active'] ? 'bg-[#F6F1E7] font-medium text-[#123D2B]' : 'text-[#66756C]' }}">{{ $item['label'] }}</a>
+                @endforeach
+            </nav>
+        </header>
+
+        {{ $hero ?? '' }}
+
+        <main class="{{ $flush ? '' : 'mx-auto max-w-[88rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8' }}">
+            @session('status')
+                <div class="{{ $flush ? 'mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8' : '' }} mb-5 rounded-2xl border border-line bg-[#F6F1E7] px-4 py-3 text-sm text-forest" role="status">{{ $value }}</div>
+            @endsession
+            {{ $slot }}
+        </main>
+        @livewireScripts
     </body>
 </html>

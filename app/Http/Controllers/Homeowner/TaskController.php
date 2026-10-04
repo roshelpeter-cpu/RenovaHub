@@ -36,7 +36,7 @@ class TaskController extends Controller
     {
         Gate::authorize('view', $project);
 
-        $tasks = $project->tasks()->with('assignee')->latest()->paginate(12);
+        $tasks = $project->tasks()->with(['assignee', 'project'])->latest()->paginate(12);
 
         return view('homeowner.tasks.index', [
             'tasks' => $tasks,

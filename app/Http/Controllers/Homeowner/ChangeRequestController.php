@@ -34,7 +34,7 @@ class ChangeRequestController extends Controller
         Gate::authorize('view', $project);
 
         return view('homeowner.change-requests.index', [
-            'changes' => $project->changeRequests()->latest()->paginate(10),
+            'changes' => $project->changeRequests()->with('project')->latest()->paginate(10),
             'project' => $project,
         ]);
     }
