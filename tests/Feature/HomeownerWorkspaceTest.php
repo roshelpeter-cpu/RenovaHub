@@ -735,7 +735,8 @@ class HomeownerWorkspaceTest extends TestCase
         $this->actingAs($owner)->get(route('homeowner.payments.index'))
             ->assertOk()
             ->assertSee('Payments')
-            ->assertSee('RenovaHub service fee')
+            ->assertSee('Total Paid')
+            ->assertSee('Successful Transactions')
             ->assertSee('Apartment Interior Makeover');
     }
 

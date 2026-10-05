@@ -1,7 +1,7 @@
 <x-homeowner-layout title="Property Location">
     <p class="text-[11px] font-medium uppercase tracking-[0.18em] text-olive">{{ $project->name }}</p>
     <h1 class="mt-2 font-serif text-3xl font-medium tracking-[-0.03em] text-forest sm:text-4xl">Property Location</h1>
-    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-mist">Search and specify your property location.</p>
+    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-mist">Enter the property address. City, province and postal code are saved with the project.</p>
 
     <div class="mt-6">
         @include('homeowner.projects.partials.steps', ['current' => 2, 'project' => $project])
@@ -54,10 +54,10 @@
             </div>
         </div>
 
-        <aside class="rounded-3xl border border-dashed border-olive/50 bg-sand/50 p-5 sm:p-6" aria-label="Location preview">
-            <p class="text-[11px] font-medium uppercase tracking-[0.16em] text-olive">Location preview</p>
-            <h2 class="mt-2 font-serif text-2xl text-forest">Map preview will appear here</h2>
-            <p class="mt-2 text-sm leading-relaxed text-mist">Google Places integration will be connected here. You can still save the address, city, province and optional coordinates.</p>
+        <aside class="rounded-3xl border border-[#ece7dc] bg-white p-5 shadow-sm sm:p-6" aria-label="Saved location">
+            <p class="text-[11px] font-medium uppercase tracking-[0.16em] text-olive">Saved location</p>
+            <h2 class="mt-2 font-serif text-2xl text-forest">{{ $project->locationLabel() ?: 'Address not entered yet' }}</h2>
+            <p class="mt-2 text-sm leading-relaxed text-mist">This is the address stored on the project. Update the fields and confirm to save it.</p>
             <dl class="mt-5 space-y-3 text-sm">
                 <div>
                     <dt class="text-mist">Address</dt>

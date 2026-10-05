@@ -2,14 +2,23 @@
 
 namespace App\Services;
 
+use App\Models\Project;
+
 /**
- * Google Places will resolve addresses after hosting.
- * Until a key exists, projects keep the city, address and coordinates already stored.
+ * Project location is entered and stored manually.
+ * Address, city, province and postal code are not sent to an external API.
  */
 class LocationService
 {
-    public function isConfigured(): bool
+    public function label(Project $project): string
     {
-        return filled(config('services.google.places_key'));
+        $parts = array_values(array_filter([
+            $project->address,
+            $project->city,
+            $project->province,
+            $project->postal_code,
+        ]));
+
+        return $parts === [] ? 'Location not added yet' : implode(', ', $parts);
     }
 }

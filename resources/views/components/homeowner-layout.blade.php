@@ -4,7 +4,7 @@
     $navCounts = $navCounts ?? ['messages' => 0, 'notifications' => 0];
     $user = auth()->user();
     // Project URLs keep My Projects active. Global Tasks and Documents are separate pages.
-    $onProject = request()->is('homeowner/projects', 'homeowner/projects/*');
+    $onProject = request()->is('homeowner/projects', 'homeowner/projects/*') && ! request()->routeIs('homeowner.payments.*');
     $links = [
         ['label' => 'Home', 'href' => route('homeowner.home'), 'active' => ! $onProject && request()->routeIs('homeowner.home', 'dashboard', 'homeowner.explore', 'homeowner.professionals.*')],
         ['label' => 'My Projects', 'href' => route('homeowner.projects.index'), 'active' => $onProject],
@@ -14,7 +14,7 @@
         ['label' => 'Quotations', 'href' => route('homeowner.quotations.index'), 'active' => request()->routeIs('homeowner.quotations.index')],
         ['label' => 'Change Requests', 'href' => route('homeowner.change-requests.index'), 'active' => request()->routeIs('homeowner.change-requests.index')],
         ['label' => 'Messages', 'href' => route('homeowner.messages.index'), 'active' => request()->routeIs('homeowner.messages.*') && ! $onProject],
-        ['label' => 'Payments', 'href' => route('homeowner.payments.index'), 'active' => request()->routeIs('homeowner.payments.index')],
+        ['label' => 'Payments', 'href' => route('homeowner.payments.index'), 'active' => request()->routeIs('homeowner.payments.*')],
     ];
 @endphp
 

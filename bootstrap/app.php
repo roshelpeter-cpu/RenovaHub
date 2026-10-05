@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'payments/payhere/notify',
+        ]);
+
         $middleware->alias([
             'homeowner' => \App\Http\Middleware\EnsureUserIsHomeowner::class,
             'designer' => \App\Http\Middleware\EnsureUserIsDesigner::class,

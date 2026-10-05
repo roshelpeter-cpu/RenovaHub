@@ -69,6 +69,6 @@ class DesignerEarning extends Model
 
     public function statusLabel(): string
     {
-        return $this->status === self::STATUS_RECORDED ? 'Recorded' : 'Pending';
+        return $this->status === self::STATUS_RECORDED ? 'Paid' : 'Pending';
     }
 }

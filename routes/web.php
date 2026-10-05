@@ -53,6 +53,7 @@ use App\Http\Controllers\Homeowner\QuotationController;
 use App\Http\Controllers\Homeowner\SectionController;
 use App\Http\Controllers\Homeowner\TaskController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\PayHereNotifyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -152,6 +153,10 @@ Route::middleware([
         Route::get('projects/{project}/payments', [PaymentController::class, 'project'])->name('projects.payments');
         Route::get('projects/{project}/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
         Route::get('projects/{project}/payments/{payment}/pay', [PaymentController::class, 'pay'])->name('payments.pay');
+        Route::post('projects/{project}/payments/{payment}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
+        Route::get('projects/{project}/payments/{payment}/result', [PaymentController::class, 'result'])->name('payments.result');
+        Route::get('payments/payhere/return/{payment}', [PaymentController::class, 'returned'])->name('payments.payhere.return');
+        Route::get('payments/payhere/cancel/{payment}', [PaymentController::class, 'cancelled'])->name('payments.payhere.cancel');
 
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
@@ -298,6 +303,8 @@ Route::middleware([
         Route::get('messages/{conversation}', [ContractorMessageController::class, 'show'])->name('messages.show');
 
         Route::get('earnings', [ContractorEarningsController::class, 'index'])->name('earnings.index');
+        Route::get('earnings/projects/{project}', [ContractorEarningsController::class, 'project'])->name('earnings.project');
+        Route::post('earnings/projects/{project}/allocations/{allocation}', [ContractorEarningsController::class, 'pay'])->name('earnings.allocations.pay');
         Route::get('earnings/{earning}', [ContractorEarningsController::class, 'show'])->name('earnings.show');
 
         Route::get('profile', [ContractorProfileController::class, 'edit'])->name('profile.edit');
@@ -309,6 +316,8 @@ Route::middleware([
         Route::post('notifications/{notification}/read', [ContractorNotificationController::class, 'read'])->name('notifications.read');
     });
 });
+Route::post('payments/payhere/notify', PayHereNotifyController::class)->name('payments.payhere.notify');
+
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
     ->name('google.redirect');
 

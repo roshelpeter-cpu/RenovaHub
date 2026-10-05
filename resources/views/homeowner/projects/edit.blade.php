@@ -67,8 +67,6 @@
                 <input id="postal_code" name="postal_code" type="text" value="{{ old('postal_code', $project->postal_code) }}" class="block w-full rounded-2xl border border-line px-4 py-3 text-sm outline-none focus:border-forest focus:ring-4 focus:ring-forest/10">
             </div>
         </div>
-        <p class="mt-2 text-xs text-mist">Google Places / Geocoding integration will be connected here.</p>
-
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
                 <label for="estimated_budget" class="mb-2 block text-sm font-medium">Estimated budget (LKR)</label>

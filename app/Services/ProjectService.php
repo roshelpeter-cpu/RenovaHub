@@ -87,8 +87,7 @@ class ProjectService
     }
 
     /**
-     * Store the manually entered location. Coordinates stay nullable until
-     * a geocoding provider is connected.
+     * Store the manually entered location. No external location API is called.
      *
      * @param  array{address?: ?string, city?: ?string, province?: ?string, postal_code?: ?string, latitude?: ?float, longitude?: ?float}  $location
      */

@@ -30,6 +30,7 @@ class Payment extends Model
         'amount',
         'renovation_amount',
         'platform_fee',
+        'net_amount',
         'fee_percent',
         'currency',
         'method',
@@ -46,6 +47,7 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'renovation_amount' => 'decimal:2',
             'platform_fee' => 'decimal:2',
+            'net_amount' => 'decimal:2',
             'fee_percent' => 'decimal:2',
             'paid_at' => 'datetime',
         ];

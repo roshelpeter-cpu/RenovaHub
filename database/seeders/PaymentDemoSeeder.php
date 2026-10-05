@@ -17,10 +17,10 @@ class PaymentDemoSeeder extends Seeder
         $sequence = 1000;
 
         foreach ($homeowner->projects as $project) {
-            $project->payments()->delete();
-        }
+            if ($project->address === 'Contractor workspace demo') {
+                continue;
+            }
 
-        foreach ($homeowner->projects as $project) {
             $project->payments()->delete();
             $quotation = $project->quotations()->where('status', 'approved')->first();
             $paid = $project->status === 'completed' ? (float) $project->current_budget : 400000;

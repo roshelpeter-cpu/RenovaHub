@@ -3,6 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\ActivityLog;
+use App\Models\BudgetSubmission;
+use App\Models\ContractorEarning;
+use App\Models\DesignerEarning;
+use App\Models\Payment;
+use App\Models\PaymentAllocation;
 use App\Models\ChangeRequest;
 use App\Models\Conversation;
 use App\Models\Document;
@@ -153,6 +158,7 @@ class ContractorWorkspaceSeeder extends Seeder
         $this->messages($homeowner, $designer, $kavinda, $support, $apartment);
         $this->activity($apartment, $coastal, $homeowner, $kavinda);
         $this->procurement($homeowner, $designer, $kavinda, $apartment, $coastal);
+        $this->showcasePayments($homeowner, $designer, $kavinda, $apartment, $coastal, $valley);
         $this->portfolio($profile);
         $this->notify($kavinda, $apartment);
     }
@@ -860,5 +866,273 @@ class ContractorWorkspaceSeeder extends Seeder
             'projects',
             route('contractor.invitations.index'),
         );
+    }
+
+    /**
+     * Mixed paid and pending shares so the earnings and payments screens have real records.
+     */
+    private function showcasePayments(User $homeowner, ?User $designer, User $contractor, Project $apartment, Project $coastal, Project $valley): void
+    {
+        $lanka = Supplier::query()->where('slug', 'lanka-hardware')->first();
+        $abc = Supplier::query()->where('slug', 'abc-interiors')->first();
+        $urban = ConstructionFirm::query()->where('slug', 'urban-builders')->first();
+        $buildRight = ConstructionFirm::query()->where('slug', 'buildright-construction')->first();
+        $prime = ConstructionFirm::query()->where('slug', 'prime-structures')->first();
+
+        $this->writeShowcase($homeowner, $designer, $contractor, $apartment, [
+            'project_amount' => 4250000,
+            'designer_fee' => 250000,
+            'materials' => 425000,
+            'construction' => 1650000,
+            'contractor_fee' => 500000,
+            'changes' => 1425000,
+            'homeowner_paid' => false,
+            'supplier_paid' => true,
+            'construction_paid' => false,
+            'supplier_id' => $lanka?->id,
+            'supplier_name' => $lanka?->name ?: 'Lanka Hardware',
+            'material' => 'Porcelain Floor Tiles',
+            'firm_id' => $urban?->id,
+            'firm_name' => $urban?->name ?: 'Urban Builders',
+            'scope' => 'Construction and Labour',
+        ]);
+
+        $this->writeShowcase($homeowner, $designer, $contractor, $coastal, [
+            'project_amount' => 5800000,
+            'designer_fee' => 250000,
+            'materials' => 680000,
+            'construction' => 2400000,
+            'contractor_fee' => 600000,
+            'changes' => 1870000,
+            'homeowner_paid' => true,
+            'supplier_paid' => true,
+            'construction_paid' => false,
+            'supplier_id' => $lanka?->id,
+            'supplier_name' => $lanka?->name ?: 'Lanka Hardware',
+            'material' => 'Bathroom Stone Tiles',
+            'firm_id' => $buildRight?->id,
+            'firm_name' => $buildRight?->name ?: 'BuildRight Construction',
+            'scope' => 'Pool deck and bathroom construction',
+        ]);
+
+        $this->writeShowcase($homeowner, $designer, $contractor, $valley, [
+            'project_amount' => 6200000,
+            'designer_fee' => 180000,
+            'materials' => 900000,
+            'construction' => 2100000,
+            'contractor_fee' => 450000,
+            'changes' => 2570000,
+            'homeowner_paid' => true,
+            'supplier_paid' => false,
+            'construction_paid' => true,
+            'supplier_id' => $abc?->id,
+            'supplier_name' => $abc?->name ?: 'ABC Interiors',
+            'material' => 'Timber Flooring',
+            'firm_id' => $prime?->id,
+            'firm_name' => $prime?->name ?: 'Prime Structures',
+            'scope' => 'Construction and Labour',
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $figures
+     */
+    private function writeShowcase(User $homeowner, ?User $designer, User $contractor, Project $project, array $figures): void
+    {
+        $percent = (float) config('renovahub.platform_fee_percent', 2);
+        $fee = round($figures['project_amount'] * ($percent / 100), 2);
+        $total = round($figures['project_amount'] + $fee, 2);
+        $service = app(PaymentService::class);
+
+        $submission = $project->budgetSubmissions()->latest('id')->first();
+        $payload = [
+            'contractor_id' => $contractor->id,
+            'designer_fee' => $figures['designer_fee'],
+            'materials' => $figures['materials'],
+            'construction' => $figures['construction'],
+            'contractor_fee' => $figures['contractor_fee'],
+            'changes' => $figures['changes'],
+            'platform_fee' => $fee,
+            'fee_percent' => $percent,
+            'total' => $total,
+            'status' => BudgetSubmission::STATUS_APPROVED,
+            'submitted_at' => $submission?->submitted_at ?? now()->subDays(4),
+            'decided_at' => now()->subDays(2),
+        ];
+
+        if ($submission) {
+            $submission->update($payload);
+        } else {
+            $submission = $project->budgetSubmissions()->create($payload);
+        }
+
+        $payment = Payment::query()->where('budget_submission_id', $submission->id)->first();
+
+        if ($payment === null && $submission->payment_id) {
+            $payment = Payment::query()->find($submission->payment_id);
+        }
+
+        $paymentData = [
+            'budget_submission_id' => $submission->id,
+            'payer_id' => $homeowner->id,
+            'payee_id' => $contractor->id,
+            'amount' => $total,
+            'renovation_amount' => $figures['project_amount'],
+            'platform_fee' => $fee,
+            'net_amount' => $total,
+            'fee_percent' => $percent,
+            'currency' => 'LKR',
+            'provider' => 'payhere',
+            'status' => $figures['homeowner_paid'] ? Payment::STATUS_PAID : Payment::STATUS_PENDING,
+            'method' => $figures['homeowner_paid'] ? 'payhere' : null,
+            'paid_at' => $figures['homeowner_paid'] ? now()->subDays(2) : null,
+            'notes' => 'Final project payment for '.$project->name.'.',
+        ];
+
+        if ($payment) {
+            $paymentData['provider_reference'] = $figures['homeowner_paid']
+                ? ($payment->provider_reference ?: 'demo-'.$payment->reference)
+                : null;
+            $payment->update($paymentData);
+        } else {
+            $reference = $service->nextReference($project);
+            $payment = $project->payments()->create($paymentData + [
+                'reference' => $reference,
+                'provider_reference' => $figures['homeowner_paid'] ? 'demo-'.$reference : null,
+            ]);
+        }
+
+        $submission->update(['payment_id' => $payment->id]);
+        $service->ensureDisbursements($payment->fresh());
+
+        $this->setShare($payment, $project, $service, PaymentAllocation::MATERIALS, [
+            'supplier_id' => $figures['supplier_id'],
+            'label' => $figures['supplier_name'],
+            'detail' => $figures['material'],
+            'amount' => $figures['materials'],
+            'platform_fee' => 0,
+            'net_amount' => $figures['materials'],
+            'paid' => $figures['supplier_paid'],
+            'payer_id' => $figures['supplier_paid'] ? $contractor->id : null,
+        ]);
+        $this->setShare($payment, $project, $service, PaymentAllocation::CONSTRUCTION, [
+            'construction_firm_id' => $figures['firm_id'],
+            'label' => $figures['firm_name'],
+            'detail' => $figures['scope'],
+            'amount' => $figures['construction'],
+            'platform_fee' => 0,
+            'net_amount' => $figures['construction'],
+            'paid' => $figures['construction_paid'],
+            'payer_id' => $figures['construction_paid'] ? $contractor->id : null,
+        ]);
+
+        $contractorFee = ContractorEarning::feeFor((float) $figures['contractor_fee'], $percent);
+        $contractorNet = ContractorEarning::netFor((float) $figures['contractor_fee'], $percent);
+        $contractorShare = $this->setShare($payment, $project, $service, PaymentAllocation::CONTRACTOR, [
+            'payee_user_id' => $contractor->id,
+            'label' => $contractor->name,
+            'detail' => 'Contractor',
+            'amount' => $figures['contractor_fee'],
+            'platform_fee' => $contractorFee,
+            'net_amount' => $contractorNet,
+            'paid' => true,
+            'payer_id' => $homeowner->id,
+            'provider' => 'payhere',
+        ]);
+
+        if ($designer) {
+            $designerFee = DesignerEarning::feeFor((float) $figures['designer_fee']);
+            $this->setShare($payment, $project, $service, PaymentAllocation::DESIGNER, [
+                'payee_user_id' => $designer->id,
+                'label' => $designer->name,
+                'detail' => 'Designer',
+                'amount' => $figures['designer_fee'],
+                'platform_fee' => $designerFee,
+                'net_amount' => DesignerEarning::netFor((float) $figures['designer_fee']),
+                'paid' => (bool) $figures['homeowner_paid'],
+                'payer_id' => $figures['homeowner_paid'] ? $homeowner->id : null,
+                'provider' => 'payhere',
+            ]);
+        }
+
+        ContractorEarning::query()->updateOrCreate(
+            ['payment_id' => $payment->id, 'contractor_id' => $contractor->id],
+            [
+                'project_id' => $project->id,
+                'label' => 'Contractor fee · '.$project->name,
+                'gross_amount' => $figures['contractor_fee'],
+                'fee_percent' => $percent,
+                'fee_amount' => $contractorFee,
+                'net_amount' => $contractorNet,
+                'status' => ContractorEarning::STATUS_RECORDED,
+                'reference' => $contractorShare->reference,
+                'recorded_on' => now()->subDays(2)->toDateString(),
+                'notes' => 'RenovaHub service charge on the contractor portion of the project payment.',
+            ],
+        );
+
+        if ($designer && $figures['homeowner_paid']) {
+            $existing = DesignerEarning::query()
+                ->where('project_id', $project->id)
+                ->where('designer_id', $designer->id)
+                ->where('label', 'Designer fee · '.$project->name)
+                ->first();
+
+            DesignerEarning::query()->updateOrCreate(
+                ['reference' => $existing?->reference ?? $service->nextReference($project)],
+                [
+                    'project_id' => $project->id,
+                    'designer_id' => $designer->id,
+                    'label' => 'Designer fee · '.$project->name,
+                    'gross_amount' => $figures['designer_fee'],
+                    'fee_percent' => DesignerEarning::FEE_PERCENT,
+                    'fee_amount' => DesignerEarning::feeFor((float) $figures['designer_fee']),
+                    'net_amount' => DesignerEarning::netFor((float) $figures['designer_fee']),
+                    'status' => DesignerEarning::STATUS_RECORDED,
+                    'recorded_on' => now()->subDays(2)->toDateString(),
+                    'notes' => 'RenovaHub service charge on the designer portion of the verified project payment.',
+                ],
+            );
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function setShare(Payment $payment, Project $project, PaymentService $service, string $bucket, array $data): PaymentAllocation
+    {
+        $allocation = $payment->allocations()->where('bucket', $bucket)->first();
+        $paid = (bool) $data['paid'];
+        $fields = [
+            'project_id' => $project->id,
+            'amount' => $data['amount'],
+            'status' => $paid ? PaymentAllocation::STATUS_PAID : PaymentAllocation::STATUS_PENDING,
+            'label' => $data['label'],
+            'detail' => $data['detail'],
+            'platform_fee' => $data['platform_fee'],
+            'net_amount' => $data['net_amount'],
+            'supplier_id' => $data['supplier_id'] ?? null,
+            'construction_firm_id' => $data['construction_firm_id'] ?? null,
+            'payee_user_id' => $data['payee_user_id'] ?? null,
+            'payer_id' => $data['payer_id'] ?? null,
+            'paid_at' => $paid ? ($allocation?->paid_at ?? now()->subDay()) : null,
+            'provider' => $paid ? ($data['provider'] ?? 'renovahub') : null,
+            'provider_reference' => $paid ? ($allocation?->provider_reference ?: 'demo-'.$bucket.'-'.$project->id) : null,
+        ];
+
+        if ($allocation) {
+            if (! $allocation->reference) {
+                $fields['reference'] = $service->nextReference($project);
+            }
+
+            $allocation->update($fields);
+
+            return $allocation->fresh();
+        }
+
+        return $payment->allocations()->create($fields + [
+            'bucket' => $bucket,
+            'reference' => $service->nextReference($project),
+        ]);
     }
 }
