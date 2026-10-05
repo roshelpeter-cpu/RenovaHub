@@ -60,6 +60,8 @@ class ConversationService
             $query->whereHas('participants', fn ($inner) => $inner->where('users.role', 'designer')->where('users.id', '!=', $homeowner->id));
         } elseif ($tab === 'contractors') {
             $query->whereHas('participants', fn ($inner) => $inner->where('users.role', 'contractor')->where('users.id', '!=', $homeowner->id));
+        } elseif ($tab === 'homeowners') {
+            $query->whereHas('participants', fn ($inner) => $inner->where('users.role', 'homeowner')->where('users.id', '!=', $homeowner->id));
         } elseif ($tab === 'support') {
             $query->where('kind', 'support');
         }

@@ -13,7 +13,7 @@ class ConversationPolicy
      */
     public function view(User $user, Conversation $conversation): bool
     {
-        return $user->isHomeowner() && $conversation->participants()->where('users.id', $user->id)->exists();
+        return $conversation->participants()->where('users.id', $user->id)->exists();
     }
 
     public function update(User $user, Conversation $conversation): bool

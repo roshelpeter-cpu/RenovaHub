@@ -71,5 +71,17 @@ class AppServiceProvider extends ServiceProvider
                 'notifications' => $user->unreadNotifications()->count(),
             ]);
         });
+
+        View::composer('components.designer-layout', function ($view) {
+            $user = auth()->user();
+
+            if ($user === null || ! $user->isDesigner()) {
+                return;
+            }
+
+            $view->with('navCounts', [
+                'notifications' => $user->unreadNotifications()->count(),
+            ]);
+        });
     }
 }

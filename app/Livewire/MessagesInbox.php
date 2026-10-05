@@ -30,7 +30,13 @@ class MessagesInbox extends Component
 
     public function mount(?int $conversationId = null): void
     {
-        Gate::authorize('viewAny', \App\Models\Project::class);
+        $user = auth()->user();
+
+        if ($user->isHomeowner()) {
+            Gate::authorize('viewAny', \App\Models\Project::class);
+        } elseif (! $user->isDesigner() && ! $user->isContractor()) {
+            abort(403);
+        }
 
         if ($conversationId !== null) {
             $this->open($conversationId);

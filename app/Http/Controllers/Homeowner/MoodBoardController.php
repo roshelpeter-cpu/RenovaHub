@@ -42,7 +42,7 @@ class MoodBoardController extends Controller
     {
         Gate::authorize('view', $project);
 
-        $project->load(['moodBoard.author', 'moodBoard.items', 'moodBoard.feedback.author']);
+        $project->load(['moodBoard.author', 'moodBoard.items', 'moodBoard.feedback.author', 'designConcepts', 'designChangeRequests']);
 
         return view('homeowner.mood-board.show', ['project' => $project]);
     }
@@ -85,17 +85,23 @@ class MoodBoardController extends Controller
         abort(403);
     }
 
-    public function approve(Project $project, ActivityLogService $activity, NotificationService $notifications): RedirectResponse
+    public function approve(Project $project, \App\Services\MoodBoardWorkflowService $boards): RedirectResponse
     {
         Gate::authorize('contribute', $project);
 
         $board = $project->moodBoard;
         abort_unless($board !== null, 404);
-
-        $board->update(['approved_at' => now()]);
-        $activity->record($project, request()->user(), 'moodboard.approved', 'The mood board was approved.');
-        $notifications->notify(request()->user(), 'Mood board approved', $project->name.' design direction is approved.', 'design', route('homeowner.projects.mood-board', $project));
+        $boards->approve($board, request()->user());
 
         return back()->with('status', 'Mood board approved.');
+    }
+
+    public function requestChanges(\App\Http\Requests\Homeowner\RequestMoodBoardChangesRequest $request, Project $project, \App\Services\MoodBoardWorkflowService $boards): RedirectResponse
+    {
+        $board = $project->moodBoard;
+        abort_unless($board !== null, 404);
+        $boards->requestChanges($board, $request->user(), $request->validated('revision_note'));
+
+        return back()->with('status', 'Change request sent to the designer.');
     }
 }

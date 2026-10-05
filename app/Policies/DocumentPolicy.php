@@ -13,7 +13,13 @@ class DocumentPolicy
      */
     public function view(User $user, Document $document): bool
     {
-        return $user->can('view', $document->project);
+        if ($user->can('view', $document->project)) {
+            return true;
+        }
+
+        // Designers see design files on accepted projects, not contractor invoices or quotations.
+        return $user->can('design', $document->project)
+            && in_array($document->category, Document::designerCategories(), true);
     }
 
     /**
@@ -25,8 +31,19 @@ class DocumentPolicy
         return $user->can('contribute', $project);
     }
 
+    public function uploadDesign(User $user, Project $project): bool
+    {
+        return $user->can('design', $project) && ! $project->isClosedRecord();
+    }
+
     public function delete(User $user, Document $document): bool
     {
+        if ($user->isDesigner()) {
+            return $user->can('design', $document->project)
+                && (int) $document->uploaded_by === (int) $user->id
+                && in_array($document->category, Document::designerCategories(), true);
+        }
+
         return $user->can('contribute', $document->project);
     }
 }

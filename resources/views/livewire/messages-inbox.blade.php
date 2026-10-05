@@ -14,7 +14,7 @@
                 <input wire:model.live.debounce.300ms="search" type="search" placeholder="Search conversations..." class="w-full rounded-full border border-[#ece7dc] bg-[#F7F4EE] py-2.5 pl-9 pr-4 text-sm outline-none focus:border-[#123D2B]">
             </label>
             <div class="mt-3 flex gap-1 overflow-x-auto pb-1">
-                @foreach (['all' => 'All', 'designers' => 'Designers', 'contractors' => 'Contractors', 'support' => 'Support'] as $key => $label)
+                @foreach (auth()->user()->isDesigner() ? ['all' => 'All', 'homeowners' => 'Homeowners', 'contractors' => 'Contractors', 'support' => 'Support'] : ['all' => 'All', 'designers' => 'Designers', 'contractors' => 'Contractors', 'support' => 'Support'] as $key => $label)
                     <button type="button" wire:click="$set('tab', '{{ $key }}')" class="rounded-full px-3.5 py-1.5 text-sm {{ $tab === $key ? 'bg-[#123D2B] text-white' : 'text-[#66756C] hover:bg-[#F6F1E7]' }}">{{ $label }}</button>
                 @endforeach
             </div>
@@ -25,7 +25,7 @@
                     $other = $conversation->counterpart(auth()->user());
                     $unread = $conversation->unreadFor(auth()->user());
                     $active = $selected?->id === $conversation->id;
-                    $role = $conversation->isSupport() ? 'Support' : ($other?->isContractor() ? 'Contractor' : 'Interior Designer');
+                    $role = $conversation->isSupport() ? 'Support' : ($other?->isHomeowner() ? 'Homeowner' : ($other?->isContractor() ? 'Contractor' : ($other?->isDesigner() ? 'Designer' : 'Professional')));
                     $preview = $conversation->last_preview ?: optional($conversation->messages->last())->body;
                     $when = $conversation->last_message_at;
                     $stamp = $when === null ? '' : ($when->isToday() ? $when->format('g:i A') : ($when->isYesterday() ? 'Yesterday' : $when->format('M j')));
@@ -67,7 +67,7 @@
         @if ($selected)
             @php
                 $peer = $selected->counterpart(auth()->user());
-                $role = $selected->isSupport() ? 'Support' : ($peer?->isContractor() ? 'Contractor' : 'Interior Designer');
+                $role = $selected->isSupport() ? 'Support' : ($peer?->isHomeowner() ? 'Homeowner' : ($peer?->isContractor() ? 'Contractor' : ($peer?->isDesigner() ? 'Designer' : 'Professional')));
                 $project = $selected->project;
                 $peerAvatar = $peer?->professionalProfile?->avatarUrl() ?: $peer?->profile_photo_url;
             @endphp

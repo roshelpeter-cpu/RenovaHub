@@ -136,6 +136,26 @@ class Project extends Model
         return $this->hasOne(MoodBoard::class);
     }
 
+    public function designConcepts(): HasMany
+    {
+        return $this->hasMany(DesignConcept::class);
+    }
+
+    public function designChangeRequests(): HasMany
+    {
+        return $this->hasMany(DesignChangeRequest::class);
+    }
+
+    public function designTasks(): HasMany
+    {
+        return $this->hasMany(DesignTask::class);
+    }
+
+    public function designerEarnings(): HasMany
+    {
+        return $this->hasMany(DesignerEarning::class);
+    }
+
     public function quotations(): HasMany
     {
         return $this->hasMany(Quotation::class);

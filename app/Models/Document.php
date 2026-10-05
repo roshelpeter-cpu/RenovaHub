@@ -70,10 +70,21 @@ class Document extends Model
             'inspection' => 'Inspection',
             'warranty' => 'Warranty',
             'floor_plans' => 'Floor Plans',
+            'final_design' => 'Final Design',
             'receipts' => 'Receipts',
             'construction' => 'Construction',
             'other' => 'Other',
         ];
+    }
+
+    /**
+     * Designers manage design packages. Financial and construction files stay with the contractor.
+     *
+     * @return list<string>
+     */
+    public static function designerCategories(): array
+    {
+        return ['design', 'floor_plans', 'technical', 'materials', 'final_design', 'other'];
     }
 
     public function categoryLabel(): string

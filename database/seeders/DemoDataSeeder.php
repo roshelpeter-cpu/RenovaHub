@@ -27,6 +27,7 @@ class DemoDataSeeder extends Seeder
             ProjectFeedbackDemoSeeder::class,
             NotificationDemoSeeder::class,
             ActivityDemoSeeder::class,
+            DesignerWorkspaceSeeder::class,
         ]);
     }
 }

@@ -46,4 +46,21 @@ class ProjectPolicy
     {
         return $this->view($user, $project) && ! $project->isClosedRecord();
     }
+
+    /**
+     * A designer reaches private design records only after accepting the offer.
+     * Knowing the project id is not enough, which blocks IDOR on /designer/projects/{id}.
+     */
+    public function design(User $user, Project $project): bool
+    {
+        if (! $user->isDesigner() || (int) $project->designer_id !== (int) $user->id) {
+            return false;
+        }
+
+        return $project->invitations()
+            ->where('user_id', $user->id)
+            ->where('role', 'designer')
+            ->where('status', 'accepted')
+            ->exists();
+    }
 }

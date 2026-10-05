@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'homeowner' => \App\Http\Middleware\EnsureUserIsHomeowner::class,
+            'designer' => \App\Http\Middleware\EnsureUserIsDesigner::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

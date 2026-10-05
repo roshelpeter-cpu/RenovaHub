@@ -70,10 +70,32 @@ class ProjectInvitationService
             ]);
 
             $project = $invitation->project()->lockForUpdate()->first();
+            $accepted = $decision === ProjectInvitation::STATUS_ACCEPTED;
+
+            // Acceptance is what confirms the professional. A decline releases the slot
+            // so the homeowner can invite someone else.
+            if ($invitation->role === 'designer') {
+                if ($accepted) {
+                    $project->designer_id = $actor->id;
+                } elseif ((int) $project->designer_id === (int) $actor->id) {
+                    $project->designer_id = null;
+                }
+                $project->save();
+            }
+
+            if ($invitation->role === 'contractor') {
+                if ($accepted && $project->contractor_id === null) {
+                    $project->contractor_id = $actor->id;
+                    $project->save();
+                } elseif (! $accepted && (int) $project->contractor_id === (int) $actor->id) {
+                    $project->contractor_id = null;
+                    $project->save();
+                }
+            }
+
             $this->refreshProjectStatus($project);
 
             $name = $actor->professionalProfile?->displayName() ?? $actor->name;
-            $accepted = $decision === ProjectInvitation::STATUS_ACCEPTED;
 
             $this->notifications->notify(
                 $project->homeowner,
