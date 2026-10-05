@@ -197,8 +197,10 @@ class HomeownerProjectTest extends TestCase
             ->assertRedirect(route('homeowner.projects.show', $project));
 
         $project->refresh();
-        $this->assertSame($designer->id, $project->designer_id);
-        $this->assertSame($contractor->id, $project->contractor_id);
+        $this->assertNull($project->designer_id);
+        $this->assertNull($project->contractor_id);
+        $this->assertNotNull($project->invitations()->where('user_id', $designer->id)->where('role', 'designer')->where('status', 'pending')->first());
+        $this->assertNotNull($project->invitations()->where('user_id', $contractor->id)->where('role', 'contractor')->where('status', 'pending')->first());
     }
 
     public function test_homeowner_dashboard_lists_their_projects(): void

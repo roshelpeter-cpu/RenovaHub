@@ -6,7 +6,7 @@ use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreMoodBoardItemRequest extends FormRequest
+class StoreFinalDesignFileRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -21,11 +21,9 @@ class StoreMoodBoardItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kind' => ['required', Rule::in(['inspiration', 'colour', 'material', 'furniture', 'lighting', 'note'])],
-            'title' => ['required', 'string', 'max:120'],
-            'body' => ['nullable', 'string', 'max:2000'],
-            'colour' => ['nullable', 'string', 'max:20'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'kind' => ['required', Rule::in(['render', 'floor_plan', 'visualisation'])],
+            'caption' => ['nullable', 'string', 'max:160'],
+            'image' => ['required', 'image', 'max:8192'],
         ];
     }
 }

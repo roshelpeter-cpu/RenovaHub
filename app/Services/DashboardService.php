@@ -94,6 +94,21 @@ class DashboardService
         $projectIds = $homeowner->projects()->select('id');
         $items = collect();
 
+        foreach ($homeowner->projects()->with(['invitations.professional'])->get() as $project) {
+            $role = $project->declinedRoleLabel();
+            if ($role === null) {
+                continue;
+            }
+
+            $items->push([
+                'icon' => 'alert',
+                'title' => 'Action required',
+                'body' => $role.' declined this project invitation. Select another '.strtolower($role).'.',
+                'amount' => $project->name,
+                'url' => route('homeowner.projects.team', $project),
+            ]);
+        }
+
         foreach (Quotation::query()->whereIn('project_id', $projectIds)->where('status', Quotation::STATUS_PENDING)->with('project')->latest()->get() as $quotation) {
             $items->push([
                 'icon' => 'quote',

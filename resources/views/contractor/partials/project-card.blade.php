@@ -15,6 +15,7 @@
         <dl class="mt-4 space-y-1.5 text-sm text-[#66756C]">
             <div class="flex justify-between gap-3"><dt>Budget</dt><dd class="text-[#123D2B]">{{ $project->money($project->estimated_budget) }}</dd></div>
             <div class="flex justify-between gap-3"><dt>Progress</dt><dd class="text-[#123D2B]">{{ (int) $project->progress }}%</dd></div>
+            <div class="flex justify-between gap-3"><dt>Materials</dt><dd class="text-[#123D2B]">{{ (int) ($project->material_requirements_count ?? $project->materialRequirements()->count()) }}</dd></div>
             <div class="flex justify-between gap-3"><dt>Homeowner</dt><dd class="text-[#123D2B]">{{ $homeowner }}</dd></div>
             <div class="flex justify-between gap-3"><dt>Designer</dt><dd class="text-[#123D2B]">{{ $designer ?: 'Not assigned' }}</dd></div>
             <div class="flex justify-between gap-3"><dt>Next milestone</dt><dd class="text-right text-[#123D2B]">{{ $milestone }}</dd></div>

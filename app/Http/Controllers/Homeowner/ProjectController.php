@@ -91,7 +91,7 @@ class ProjectController extends Controller
         $project->load([
             'designer.professionalProfile',
             'contractor.professionalProfile',
-            'invitations.professional',
+            'invitations.professional.professionalProfile',
             'progressStages',
             'milestones' => fn ($query) => $query->orderBy('due_on')->orderBy('id'),
             'quotations',

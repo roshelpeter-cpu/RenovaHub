@@ -27,6 +27,19 @@ class InvitationController extends Controller
         return view('contractor.invitations.index', compact('invitations', 'tab'));
     }
 
+    public function show(Request $request, ProjectInvitation $invitation): View
+    {
+        abort_unless($invitation->user_id === $request->user()->id && $invitation->role === 'contractor', 404);
+        $invitation->load(['project.homeowner', 'project.referenceImages']);
+
+        return view('invitations.professional-show', [
+            'invitation' => $invitation,
+            'project' => $invitation->project,
+            'layout' => 'contractor-layout',
+            'roleLabel' => 'Contractor',
+        ]);
+    }
+
     public function accept(Request $request, ProjectInvitation $invitation, ProjectInvitationService $invitations): RedirectResponse
     {
         $this->authorize('respond', $invitation);

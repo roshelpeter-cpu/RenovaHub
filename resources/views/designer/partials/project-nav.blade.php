@@ -5,6 +5,7 @@
         ['Mood Board', route('designer.projects.mood-board', $project), request()->routeIs('designer.projects.mood-board')],
         ['Design Concepts', route('designer.concepts.index', ['project' => $project->id]), request()->routeIs('designer.concepts.*') && (int) request()->route('project')?->id === $project->id],
         ['Revisions', route('designer.projects.revisions', $project), request()->routeIs('designer.projects.revisions')],
+        ['Final Design', route('designer.projects.final-design', $project), request()->routeIs('designer.projects.final-design')],
         ['Documents', route('designer.projects.documents', $project), request()->routeIs('designer.projects.documents')],
         ['Tasks', route('designer.projects.tasks', $project), request()->routeIs('designer.projects.tasks')],
         ['Messages', route('designer.projects.messages', $project), request()->routeIs('designer.projects.messages')],

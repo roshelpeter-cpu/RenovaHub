@@ -46,7 +46,9 @@ class DesignChangeRequest extends Model
         return match ($this->status) {
             self::STATUS_ACCEPTED => 'Accepted',
             self::STATUS_REJECTED => 'Rejected',
-            self::STATUS_REVISED => 'Revised design submitted',
+            self::STATUS_REVISED => 'Resolved',
+            'needs_discussion' => 'Needs Discussion',
+            'resolved' => 'Resolved',
             default => 'Pending',
         };
     }

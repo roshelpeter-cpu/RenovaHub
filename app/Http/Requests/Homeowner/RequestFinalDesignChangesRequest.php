@@ -5,7 +5,7 @@ namespace App\Http\Requests\Homeowner;
 use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
 
-class RequestMoodBoardChangesRequest extends FormRequest
+class RequestFinalDesignChangesRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -20,8 +20,8 @@ class RequestMoodBoardChangesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['nullable', 'string', 'max:120'],
-            'revision_note' => ['required', 'string', 'min:8', 'max:2000'],
+            'title' => ['required', 'string', 'max:120'],
+            'comment' => ['required', 'string', 'min:8', 'max:2000'],
         ];
     }
 }

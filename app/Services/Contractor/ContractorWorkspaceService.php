@@ -83,7 +83,8 @@ class ContractorWorkspaceService
                 'budgetItems',
                 'milestones',
                 'progressStages',
-            ]);
+            ])
+            ->withCount('materialRequirements');
 
         if ($filter === 'active') {
             $query->whereIn('status', [Project::STATUS_IN_PROGRESS, Project::STATUS_CONFIRMED]);

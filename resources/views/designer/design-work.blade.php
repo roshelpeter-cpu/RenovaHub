@@ -31,6 +31,7 @@
                 <a class="text-[#123D2B] hover:underline" href="{{ route('designer.projects.mood-board', $board['project']) }}">Mood board</a>
                 <a class="text-[#123D2B] hover:underline" href="{{ route('designer.concepts.index', ['project' => $board['project']->id]) }}">Design concepts</a>
                 <a class="text-[#123D2B] hover:underline" href="{{ route('designer.projects.revisions', $board['project']) }}">Revisions</a>
+                <a class="text-[#123D2B] hover:underline" href="{{ route('designer.projects.final-design', $board['project']) }}">Final design</a>
             </div>
         </article>
     @empty

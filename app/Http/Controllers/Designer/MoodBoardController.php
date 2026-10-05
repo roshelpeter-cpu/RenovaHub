@@ -28,6 +28,7 @@ class MoodBoardController extends Controller
         $project = $workspace->findAccepted($request->user(), $project);
         $board = $boards->ensureBoard($project, $request->user());
         $board->load('items');
+        $project->load('designChangeRequests.requester');
         $project->setRelation('moodBoard', $board);
 
         return view('designer.mood-boards.show', compact('project', 'board'));

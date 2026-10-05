@@ -105,8 +105,8 @@ class ProjectDemoSeeder extends Seeder
             ],
         ];
 
-        $names = array_column($definitions, 0);
-        $homeowner->projects()->whereNotIn('name', $names)->delete();
+        $names = array_merge(array_column($definitions, 0), ['Hillview Bungalow', 'Beach House Renovation']);
+        $homeowner->projects()->whereNotIn('name', $names)->where('address', '!=', 'Contractor workspace demo')->delete();
 
         foreach ($definitions as $row) {
             [$name, $description, $requirements, $renovation, $property, $size, $address, $city, $postal, $status, $progress, $budget, $current, $start, $end, $finished, $image, $designer, $contractor, $galleryOffset, $stages, $meta] = $row;
@@ -147,6 +147,92 @@ class ProjectDemoSeeder extends Seeder
             $this->tasks($project, $designer, $contractor, $status === Project::STATUS_COMPLETED);
             $this->milestones($project, $status === Project::STATUS_COMPLETED, $end);
         }
+
+        $this->upcoming($homeowner, $sithumi, $kavinda);
+        $this->declined($homeowner, $amaya, $lanka);
+    }
+
+    /**
+     * A created project that has not started stays out of All, Ongoing and Completed.
+     */
+    private function upcoming(User $homeowner, User $designer, User $contractor): void
+    {
+        $project = $homeowner->projects()->updateOrCreate(
+            ['name' => 'Hillview Bungalow'],
+            [
+                'description' => 'A single-storey bungalow refresh with a new veranda, timber floors and a shaded garden court. Work has not started.',
+                'requirements' => 'Keep the original roof line. Open the living room to the veranda and specify warm timber, linen and clay finishes.',
+                'renovation_type' => 'full_house',
+                'property_type' => 'house',
+                'size_sq_ft' => 1680,
+                'address' => '4 Hillview Lane',
+                'city' => 'Kandy',
+                'province' => 'Central Province',
+                'postal_code' => '20000',
+                'status' => Project::STATUS_AWAITING_TEAM,
+                'progress' => 0,
+                'estimated_budget' => 6400000,
+                'current_budget' => 6400000,
+                'currency' => 'LKR',
+                'expected_start_date' => '2027-02-01',
+                'expected_completion_date' => '2027-08-30',
+                'cover_image' => 'images/projects/bungalow.jpg',
+                'designer_id' => null,
+                'contractor_id' => null,
+                'workspace_meta' => ['type_label' => 'Bungalow Renovation'],
+            ],
+        );
+
+        foreach (['designer' => $designer, 'contractor' => $contractor] as $role => $person) {
+            $project->invitations()->updateOrCreate(
+                ['user_id' => $person->id, 'role' => $role],
+                ['status' => ProjectInvitation::STATUS_PENDING, 'responded_at' => null],
+            );
+        }
+
+        $this->gallery($project);
+    }
+
+    /**
+     * One declined invitation so the homeowner sees the red action marker.
+     */
+    private function declined(User $homeowner, User $designer, User $contractor): void
+    {
+        $project = $homeowner->projects()->updateOrCreate(
+            ['name' => 'Beach House Renovation'],
+            [
+                'description' => 'A beach house refresh with salt-resistant finishes, a new deck and open living toward the sea.',
+                'requirements' => 'Protect timber from salt air. Keep the bedroom wing quiet and specify outdoor-rated lighting.',
+                'renovation_type' => 'full_house',
+                'property_type' => 'villa',
+                'size_sq_ft' => 2400,
+                'address' => '18 Palm Shore',
+                'city' => 'Bentota',
+                'province' => 'Southern Province',
+                'postal_code' => '80500',
+                'status' => Project::STATUS_AWAITING_TEAM,
+                'progress' => 0,
+                'estimated_budget' => 9800000,
+                'current_budget' => 9800000,
+                'currency' => 'LKR',
+                'expected_start_date' => '2026-12-01',
+                'expected_completion_date' => '2027-06-30',
+                'cover_image' => 'images/projects/beach-house.jpg',
+                'designer_id' => $designer->id,
+                'contractor_id' => null,
+                'workspace_meta' => ['type_label' => 'Beach House'],
+            ],
+        );
+
+        $project->invitations()->updateOrCreate(
+            ['user_id' => $designer->id, 'role' => 'designer'],
+            ['status' => ProjectInvitation::STATUS_ACCEPTED, 'responded_at' => now()->subDays(4)],
+        );
+        $project->invitations()->updateOrCreate(
+            ['user_id' => $contractor->id, 'role' => 'contractor'],
+            ['status' => ProjectInvitation::STATUS_DECLINED, 'responded_at' => now()->subDays(2)],
+        );
+        $this->gallery($project);
     }
 
     /**
@@ -154,55 +240,36 @@ class ProjectDemoSeeder extends Seeder
      */
     private function photosFor(Project $project): array
     {
-        return match ($project->name) {
-            'Lakeview Villa Renovation' => [
-                'images/renova/about-exterior.jpg',
-                'images/renova/hero.jpg',
-                'images/renova/feature-green.jpg',
-                'images/renova/about-interior.jpg',
-                'images/renova/feature-plans.jpg',
-                'images/renova/auth-login.jpg',
-            ],
-            'Apartment Interior Makeover' => [
-                'images/renova/about-interior.jpg',
-                'images/renova/feature-collab.jpg',
-                'images/renova/auth-register.jpg',
-                'images/renova/feature-notes.jpg',
-                'images/renova/feature-tasks.jpg',
-                'images/renova/feature-plans.jpg',
-            ],
-            'Green Valley Residence' => [
-                'images/renova/feature-collab.jpg',
-                'images/renova/feature-quotes.jpg',
-                'images/renova/feature-docs.jpg',
-                'images/renova/hero.jpg',
-                'images/renova/feature-green.jpg',
-                'images/renova/about-interior.jpg',
-            ],
-            'Family Home Extension' => [
-                'images/renova/feature-green.jpg',
-                'images/renova/feature-changes.jpg',
-                'images/renova/about-exterior.jpg',
-                'images/renova/feature-plans.jpg',
-                'images/renova/feature-progress.jpg',
-            ],
-            'Commercial Office Renovation' => [
-                'images/renova/feature-progress.jpg',
-                'images/renova/feature-docs.jpg',
-                'images/renova/feature-quotes.jpg',
-                'images/renova/feature-tasks.jpg',
-                'images/renova/auth-register.jpg',
-                'images/renova/feature-notes.jpg',
-                'images/renova/feature-collab.jpg',
-            ],
-            default => [
-                'images/renova/about-interior.jpg',
-                'images/renova/about-exterior.jpg',
-                'images/renova/feature-collab.jpg',
-                'images/renova/feature-progress.jpg',
-                'images/renova/feature-green.jpg',
-            ],
+        $pool = [
+            'images/projects/apartment.jpg',
+            'images/projects/coastal-villa.jpg',
+            'images/projects/garden-house.jpg',
+            'images/projects/modern-house.jpg',
+            'images/projects/beach-house.jpg',
+            'images/projects/bungalow.jpg',
+            'images/projects/office.jpg',
+            'images/projects/living.jpg',
+            'images/projects/kitchen.jpg',
+            'images/projects/bathroom.jpg',
+            'images/projects/extension.jpg',
+            'images/projects/render.jpg',
+        ];
+        $start = match ($project->name) {
+            'Lakeview Villa Renovation' => 1,
+            'Apartment Interior Makeover' => 0,
+            'Green Valley Residence' => 2,
+            'Family Home Extension' => 10,
+            'Commercial Office Renovation' => 6,
+            'Hillview Bungalow' => 5,
+            'Beach House Renovation' => 4,
+            default => 7,
         };
+        $photos = [];
+        for ($i = 0; $i < 6; $i++) {
+            $photos[] = $pool[($start + $i) % count($pool)];
+        }
+
+        return $photos;
     }
 
     private function gallery(Project $project): void

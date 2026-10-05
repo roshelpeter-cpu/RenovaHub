@@ -10,7 +10,16 @@
             <p class="text-sm text-[#66756C]">{{ $board->statusLabel() }}@if($board->revision_note) · {{ $board->revision_note }}@endif</p>
         </div>
         @if ($board->canSubmit())
-            <form method="POST" action="{{ route('designer.projects.mood-board.submit', $project) }}">@csrf<button class="rounded-full bg-[#123D2B] px-4 py-2 text-sm text-white">{{ $board->status === 'revision_requested' ? 'Resubmit for Approval' : 'Submit for Homeowner Approval' }}</button></form>
+            <form method="POST" action="{{ route('designer.projects.mood-board.submit', $project) }}">@csrf<button class="rounded-full bg-[#123D2B] px-4 py-2 text-sm text-white">{{ $board->status === 'revision_requested' ? 'Resubmit for Approval' : 'Submit for Approval' }}</button></form>
+        @elseif ($board->status === \App\Models\MoodBoard::STATUS_AWAITING)
+            <div class="rounded-full bg-[#E7F0E4] px-4 py-2 text-sm text-[#123D2B]">
+                Sent for Approval
+                @if ($board->submitted_at)
+                    <span class="text-[#66756C]">· {{ $board->submitted_at->format('j M Y') }}</span>
+                @endif
+            </div>
+        @elseif ($board->isFinal())
+            <p class="rounded-full bg-[#E7F0E4] px-4 py-2 text-sm text-[#123D2B]">Approved</p>
         @endif
     </div>
     @if ($errors->any())
@@ -21,7 +30,7 @@
             @csrf
             <label class="text-sm">Type
                 <select name="kind" class="mt-1 w-full rounded-2xl border border-[#ece7dc] px-3 py-2">
-                    @foreach (['inspiration' => 'Inspiration image', 'colour' => 'Colour', 'material' => 'Material', 'furniture' => 'Furniture & decor', 'note' => 'Design note'] as $value => $label)
+                    @foreach (['inspiration' => 'Inspiration image', 'colour' => 'Colour', 'material' => 'Material', 'furniture' => 'Furniture', 'lighting' => 'Lighting', 'note' => 'Design note'] as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
@@ -72,6 +81,12 @@
                     <li>{{ $piece->title }}</li>
                 @endforeach
             </ul>
+            <h3 class="mt-5 text-sm font-medium text-[#66756C]">Lighting</h3>
+            <ul class="mt-3 space-y-2 text-sm text-[#123D2B]">
+                @foreach ($items->where('kind', 'lighting') as $light)
+                    <li>{{ $light->title }}@if($light->body) — {{ $light->body }}@endif</li>
+                @endforeach
+            </ul>
             <h3 class="mt-5 text-sm font-medium text-[#66756C]">Design Notes</h3>
             <ul class="mt-3 space-y-2 text-sm text-[#66756C]">
                 @foreach ($items->where('kind', 'note') as $note)
@@ -80,4 +95,31 @@
             </ul>
         </article>
     </div>
+    <section class="mt-6 rounded-[1.4rem] border border-[#ece7dc] bg-white p-5 shadow-sm">
+        <h3 class="font-serif text-2xl text-[#123D2B]">Homeowner Change Requests</h3>
+        <div class="mt-4 overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="text-xs text-[#66756C]">
+                    <tr>
+                        <th class="py-2 pr-4 font-medium">Request</th>
+                        <th class="py-2 pr-4 font-medium">Date</th>
+                        <th class="py-2 pr-4 font-medium">Status</th>
+                        <th class="py-2 font-medium">Homeowner Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($project->designChangeRequests->where('design_impact', 'mood_board') as $request)
+                        <tr class="border-t border-[#ece7dc]">
+                            <td class="py-3 pr-4 text-[#123D2B]">{{ $request->title }}</td>
+                            <td class="py-3 pr-4 text-[#66756C]">{{ $request->created_at?->format('j M Y') }}</td>
+                            <td class="py-3 pr-4">{{ $request->statusLabel() }}</td>
+                            <td class="py-3 text-[#66756C]">{{ $request->description }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="py-3 text-[#66756C]">No homeowner change requests yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
 </x-designer-layout>

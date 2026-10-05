@@ -119,6 +119,14 @@ class MoodBoardWorkflowService
             'version' => $board->version + 1,
         ]);
 
+        $board->project->designChangeRequests()->create([
+            'requested_by' => $homeowner->id,
+            'title' => request()->string('title')->toString() ?: 'Mood board change',
+            'description' => $note,
+            'design_impact' => 'mood_board',
+            'status' => \App\Models\DesignChangeRequest::STATUS_PENDING,
+        ]);
+
         $project = $board->project;
         $this->activity->record($project, $homeowner, 'moodboard.revision', 'The homeowner requested mood board changes.');
 

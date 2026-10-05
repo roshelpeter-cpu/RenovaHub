@@ -7,6 +7,7 @@
         [$count('Tasks', (int) $project->tasks_count), route('homeowner.projects.tasks', $project), request()->routeIs('homeowner.projects.tasks*')],
         [$count('Documents', (int) $project->documents_count), route('homeowner.projects.documents', $project), request()->routeIs('homeowner.projects.documents*')],
         ['Mood Board', route('homeowner.projects.mood-board', $project), request()->routeIs('homeowner.projects.mood-board*')],
+        ['Final Design', route('homeowner.projects.final-design', $project), request()->routeIs('homeowner.projects.final-design*')],
         [$count('Quotations', (int) $project->quotations_count), route('homeowner.projects.quotations', $project), request()->routeIs('homeowner.quotations.show', 'homeowner.projects.quotations')],
         [$count('Change Requests', (int) $project->change_requests_count), route('homeowner.projects.change-requests', $project), request()->routeIs('homeowner.change-requests.show', 'homeowner.change-requests.create', 'homeowner.projects.change-requests*')],
     ];

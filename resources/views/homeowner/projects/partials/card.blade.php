@@ -1,34 +1,48 @@
 @php
     $wide = $wide ?? false;
-    $designer = $project->designer;
-    $contractor = $project->contractor;
     $completed = $project->status === \App\Models\Project::STATUS_COMPLETED;
+    $upcoming = $project->isUpcoming();
+    $declinedRole = $project->declinedRoleLabel();
+    $designerSlot = $project->teamPresentation('designer');
+    $contractorSlot = $project->teamPresentation('contractor');
     $dateLabel = $completed
         ? ($project->actual_completion_date?->format('M Y') ?? $project->expected_completion_date?->format('M Y'))
-        : $project->expected_completion_date?->format('M Y');
+        : ($upcoming ? $project->created_at?->format('j M Y') : $project->expected_completion_date?->format('M Y'));
+    $badge = $completed ? 'Completed' : ($upcoming ? 'Upcoming' : 'In Progress');
 @endphp
 
-<article class="overflow-hidden rounded-[1.5rem] border border-[#ece7dc] bg-white shadow-sm {{ $wide ? '' : 'flex h-full flex-col' }}">
+<article class="overflow-hidden rounded-[1.5rem] border bg-white shadow-sm {{ $declinedRole ? 'border-[#C4503A]' : 'border-[#ece7dc]' }} {{ $wide ? '' : 'flex h-full flex-col' }}">
+    @if ($declinedRole)
+        <div class="flex items-start gap-3 bg-[#F8E8E4] px-5 py-3 text-sm text-[#8A3B2A]">
+            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#C4503A] text-sm font-semibold text-white" aria-hidden="true">!</span>
+            <span>
+                <span class="block font-medium">Action Required</span>
+                <span class="block">{{ $declinedRole }} declined this project invitation. Select another {{ strtolower($declinedRole) }}.</span>
+            </span>
+        </div>
+    @endif
     <div class="relative {{ $wide ? 'h-52' : 'h-44' }}">
         @if ($project->coverUrl())
             <img src="{{ $project->coverUrl() }}" alt="" class="h-full w-full object-cover">
         @else
             <div class="h-full w-full bg-[#EFE8DA]"></div>
         @endif
-        <span class="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium {{ $completed ? 'bg-[#E7F0E4] text-[#123D2B]' : 'bg-[#E7F0E4] text-[#123D2B]' }}">
-            {{ $completed ? 'Completed' : 'In Progress' }}
+        <span class="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium {{ $declinedRole ? 'bg-[#F8E8E4] text-[#8A3B2A]' : 'bg-[#E7F0E4] text-[#123D2B]' }}">
+            {{ $badge }}
         </span>
     </div>
 
     <div class="flex flex-1 flex-col p-5">
         <h2 class="font-serif text-[1.45rem] leading-tight text-[#123D2B]">{{ $project->name }}</h2>
         <p class="mt-1.5 text-sm text-[#66756C]">{{ $project->cataloguePlaceLabel() }}</p>
-        @if (! $completed)
+        @if ($upcoming)
+            <p class="text-xs text-[#66756C]">Created {{ $project->created_at?->format('j M Y') }} · {{ $project->propertyTypeLabel() }} · {{ $project->displayTypeLabel() }}</p>
+        @elseif (! $completed)
             <p class="text-xs text-[#66756C]">{{ $project->propertyTypeLabel() }} · {{ $project->displayTypeLabel() }}</p>
         @endif
         <p class="mt-3 line-clamp-2 text-sm leading-relaxed text-[#66756C]">{{ $project->description }}</p>
 
-        @if (! $completed)
+        @if (! $completed && ! $upcoming)
             <div class="mt-4">
                 <div class="mb-1 flex justify-end text-sm font-medium text-[#123D2B]">{{ $project->progress }}%</div>
                 <div class="h-1.5 overflow-hidden rounded-full bg-[#EFE8DA]" role="progressbar" aria-valuenow="{{ $project->progress }}" aria-valuemin="0" aria-valuemax="100">
@@ -51,7 +65,7 @@
                 <p class="font-medium text-[#18352A]">{{ $project->estimated_budget !== null ? 'LKR '.number_format((float) $project->estimated_budget, 0) : 'Not set' }}</p>
             </div>
             <div>
-                <p class="text-xs text-[#66756C]">{{ $completed ? 'Completed' : 'Expected Completion' }}</p>
+                <p class="text-xs text-[#66756C]">{{ $completed ? 'Completed' : ($upcoming ? 'Created' : 'Expected Completion') }}</p>
                 <p class="font-medium text-[#18352A]">{{ $dateLabel ?: 'Not set' }}</p>
             </div>
             @if ($completed)
@@ -64,20 +78,19 @@
 
         @if (! $completed)
             <div class="mt-4 flex flex-wrap gap-4 text-sm">
-                <div class="flex items-center gap-2">
-                    <img src="{{ $designer?->professionalProfile?->avatarUrl() ?: $designer?->profile_photo_url }}" alt="" class="h-8 w-8 rounded-full object-cover">
-                    <div>
-                        <p class="text-[11px] text-[#66756C]">Designer</p>
-                        <p class="font-medium text-[#18352A]">{{ $designer?->professionalProfile?->displayName() ?? $designer?->name ?? 'Not selected' }}</p>
+                @foreach (['Designer' => $designerSlot, 'Contractor' => $contractorSlot] as $roleLabel => $slot)
+                    @php $person = $slot['user']; @endphp
+                    <div class="flex items-center gap-2">
+                        @if ($person)
+                            <img src="{{ $person->professionalProfile?->avatarUrl() ?: $person->profile_photo_url }}" alt="" class="h-8 w-8 rounded-full object-cover">
+                        @endif
+                        <div>
+                            <p class="text-[11px] text-[#66756C]">{{ $roleLabel }}</p>
+                            <p class="font-medium text-[#18352A]">{{ $person?->professionalProfile?->displayName() ?? $person?->name ?? 'Not selected' }}</p>
+                            <p class="text-[11px] {{ $slot['state'] === 'declined' ? 'font-medium text-[#8A3B2A]' : ($slot['state'] === 'pending' ? 'text-[#8A6A2F]' : 'text-[#2F6B49]') }}">{{ $slot['label'] }}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <img src="{{ $contractor?->professionalProfile?->listingImageUrl() ?: $contractor?->profile_photo_url }}" alt="" class="h-8 w-8 rounded-full object-cover">
-                    <div>
-                        <p class="text-[11px] text-[#66756C]">Contractor</p>
-                        <p class="font-medium text-[#18352A]">{{ $contractor?->professionalProfile?->displayName() ?? $contractor?->name ?? 'Not selected' }}</p>
-                    </div>
-                </div>
+                @endforeach
             </div>
         @endif
 

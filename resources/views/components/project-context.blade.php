@@ -10,12 +10,14 @@
         'milestones',
         'progressStages',
         'images',
+        'invitations.professional.professionalProfile',
     ]);
     $sectionLabel = [
         'overview' => 'Overview',
         'tasks' => 'Tasks',
         'documents' => 'Documents',
         'mood-board' => 'Mood Board',
+        'final-design' => 'Final Design',
         'quotations' => 'Quotations',
         'change-requests' => 'Change Requests',
         'feedback' => 'Feedback',

@@ -521,6 +521,88 @@ class Project extends Model
     }
 
     /**
+     * A project that has not started construction stays in Upcoming.
+     */
+    public function isUpcoming(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_DRAFT,
+            self::STATUS_PLANNING,
+            self::STATUS_AWAITING_TEAM,
+            self::STATUS_CONFIRMED,
+        ], true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function upcomingStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_PLANNING,
+            self::STATUS_AWAITING_TEAM,
+            self::STATUS_CONFIRMED,
+        ];
+    }
+
+    /**
+     * Pending and declined invitations are not confirmed team members.
+     *
+     * @return array{state: string, user: ?User, label: string}
+     */
+    public function teamPresentation(string $role): array
+    {
+        $invitation = $this->latestInvitation($role);
+        $member = $this->{$role};
+
+        if ($invitation?->isPending()) {
+            return [
+                'state' => 'pending',
+                'user' => $invitation->professional,
+                'label' => 'Pending Invitation',
+            ];
+        }
+
+        if ($invitation?->status === ProjectInvitation::STATUS_DECLINED && ($member === null || (int) $member->id === (int) $invitation->user_id)) {
+            return [
+                'state' => 'declined',
+                'user' => $invitation->professional,
+                'label' => 'Declined',
+            ];
+        }
+
+        if ($member !== null) {
+            return [
+                'state' => 'accepted',
+                'user' => $member,
+                'label' => 'Accepted',
+            ];
+        }
+
+        if ($invitation?->status === ProjectInvitation::STATUS_ACCEPTED) {
+            return [
+                'state' => 'accepted',
+                'user' => $invitation->professional,
+                'label' => 'Accepted',
+            ];
+        }
+
+        return ['state' => 'empty', 'user' => null, 'label' => 'Not selected'];
+    }
+
+    public function declinedRoleLabel(): ?string
+    {
+        foreach (['designer' => 'Designer', 'contractor' => 'Contractor'] as $role => $label) {
+            if ($this->teamPresentation($role)['state'] === 'declined') {
+                return $label;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Jan through Jun is six months on the project cards, counting both ends.
      */
     public function durationMonths(): ?int

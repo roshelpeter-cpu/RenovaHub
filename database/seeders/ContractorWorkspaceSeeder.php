@@ -196,25 +196,33 @@ class ContractorWorkspaceSeeder extends Seeder
             }
         }
 
-        foreach ([
-            ['Porcelain Tile', 'Living Room', 'Flooring & Tiles', 450, 'sq.ft', '600x600 matte', 450000],
-            ['Kitchen Cabinet', 'Kitchen', 'Kitchen & Cabinets', 1, 'set', 'Warm oak, soft-close', 850000],
-            ['Countertop', 'Kitchen', 'Kitchen & Cabinets', 35, 'sq.ft', 'Quartz, 20mm', 180000],
-            ['Light Fixture', 'Whole House', 'Lighting', 18, 'units', 'Warm white', 120000],
-        ] as [$name, $room, $category, $qty, $unit, $spec, $value]) {
-            MaterialRequirement::query()->updateOrCreate(
-                ['project_id' => $apartment->id, 'name' => $name],
+        $this->materials($apartment, $concept, 18);
+        $coastalConcept = DesignConcept::query()->updateOrCreate(
+            ['project_id' => $coastal->id, 'title' => 'Approved final design package'],
+            [
+                'designer_id' => $designer?->id ?? $homeowner->id,
+                'description' => 'Coastal villa package approved for construction.',
+                'notes' => 'Salt-resistant finishes and a quieter bedroom wing.',
+                'status' => DesignConcept::STATUS_APPROVED,
+                'submitted_at' => now()->subDays(6),
+                'approved_at' => now()->subDays(2),
+            ],
+        );
+        $this->materials($coastal, $coastalConcept, 14);
+        $valley = Project::query()->where('name', 'Green Valley Residence')->where('address', 'Contractor workspace demo')->first();
+        if ($valley) {
+            $valleyConcept = DesignConcept::query()->updateOrCreate(
+                ['project_id' => $valley->id, 'title' => 'Approved final design package'],
                 [
-                    'design_concept_id' => $concept->id,
-                    'room' => $room,
-                    'category' => $category,
-                    'quantity' => $qty,
-                    'unit' => $unit,
-                    'specification' => $spec,
-                    'estimated_value' => $value,
-                    'status' => 'quoted',
+                    'designer_id' => $designer?->id ?? $homeowner->id,
+                    'description' => 'Garden residence package approved for construction.',
+                    'notes' => 'Warm timber and sage walls toward the garden.',
+                    'status' => DesignConcept::STATUS_APPROVED,
+                    'submitted_at' => now()->subDays(9),
+                    'approved_at' => now()->subDays(5),
                 ],
             );
+            $this->materials($valley, $valleyConcept, 12);
         }
 
         $photos = ['images/renova/about-exterior.jpg', 'images/renova/feature-tasks.jpg', 'images/renova/feature-progress.jpg'];
@@ -353,7 +361,7 @@ class ContractorWorkspaceSeeder extends Seeder
             'expected_completion_date' => '2026-12-20',
             'status' => $status,
             'progress' => $progress,
-            'cover_image' => $photos[0],
+            'cover_image' => $this->coverFor($name),
             'designer_id' => $designer?->id,
             'contractor_id' => $accepted ? $contractor?->id : null,
             'workspace_meta' => [
@@ -364,11 +372,9 @@ class ContractorWorkspaceSeeder extends Seeder
         ]);
         $project->save();
 
-        if ($project->referenceImages()->count() < 5) {
-            $project->referenceImages()->delete();
-            foreach ($photos as $path) {
-                $project->referenceImages()->create(['path' => $path, 'original_name' => basename($path)]);
-            }
+        $project->referenceImages()->delete();
+        foreach ($this->galleryFor($name) as $path) {
+            $project->referenceImages()->create(['path' => $path, 'original_name' => basename($path)]);
         }
 
         $planning = $progress >= 30 ? 100 : max($progress, 10);
@@ -762,6 +768,83 @@ class ContractorWorkspaceSeeder extends Seeder
                 $case->images()->create(['path' => $path, 'sort_order' => $index]);
             }
         }
+    }
+
+    private function materials(Project $project, DesignConcept $concept, int $count): void
+    {
+        $rows = [
+            ['Porcelain Tile', 'Living Room', 'Flooring', 450, 'sq.ft', '600 × 600 mm'],
+            ['Kitchen Cabinet', 'Kitchen', 'Joinery', 1, 'set', 'Warm oak, soft-close'],
+            ['Countertop', 'Kitchen', 'Stone', 35, 'sq.ft', 'Quartz, 20 mm'],
+            ['Bathroom Tile', 'Bathroom', 'Flooring', 180, 'sq.ft', '300 × 600 mm'],
+            ['Lighting', 'Whole house', 'Lighting', 18, 'units', 'Warm white'],
+            ['Doors', 'Bedrooms', 'Joinery', 6, 'nos', 'Solid timber'],
+            ['Windows', 'Living Room', 'Glazing', 4, 'nos', 'Powder-coated aluminium'],
+            ['Sanitaryware', 'Bathrooms', 'Plumbing', 3, 'sets', 'Wall-hung'],
+            ['Flooring', 'Bedrooms', 'Flooring', 620, 'sq.ft', 'Engineered oak'],
+            ['Paint', 'Whole house', 'Finishes', 48, 'litre', 'Low-VOC emulsion'],
+            ['Furniture', 'Living Room', 'Furniture', 1, 'set', 'Sofa and side tables'],
+            ['Wardrobes', 'Bedrooms', 'Joinery', 3, 'nos', 'Floor to ceiling'],
+            ['Vanity', 'Bathroom', 'Joinery', 2, 'nos', 'Timber and stone'],
+            ['Switches', 'Whole house', 'Electrical', 42, 'nos', 'Brushed brass'],
+            ['Curtains', 'Bedrooms', 'Soft furnishings', 8, 'nos', 'Linen'],
+            ['Outdoor tile', 'Terrace', 'Flooring', 220, 'sq.ft', 'Slip-resistant'],
+            ['Skirting', 'Whole house', 'Joinery', 240, 'm', 'Matching timber'],
+            ['Ceiling feature', 'Living Room', 'Finishes', 1, 'item', 'Timber slats'],
+        ];
+
+        foreach (array_slice($rows, 0, $count) as [$name, $room, $category, $qty, $unit, $spec]) {
+            MaterialRequirement::query()->updateOrCreate(
+                ['project_id' => $project->id, 'name' => $name],
+                [
+                    'design_concept_id' => $concept->id,
+                    'room' => $room,
+                    'category' => $category,
+                    'quantity' => $qty,
+                    'unit' => $unit,
+                    'specification' => $spec,
+                    'status' => 'pending',
+                ],
+            );
+        }
+    }
+
+    private function coverFor(string $name): string
+    {
+        return $this->galleryFor($name)[0];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function galleryFor(string $name): array
+    {
+        $pool = [
+            'images/projects/apartment.jpg',
+            'images/projects/coastal-villa.jpg',
+            'images/projects/garden-house.jpg',
+            'images/projects/modern-house.jpg',
+            'images/projects/beach-house.jpg',
+            'images/projects/bungalow.jpg',
+            'images/projects/living.jpg',
+            'images/projects/kitchen.jpg',
+            'images/projects/bathroom.jpg',
+            'images/projects/render.jpg',
+        ];
+        $start = match (true) {
+            str_contains($name, 'Apartment') => 0,
+            str_contains($name, 'Coastal') => 1,
+            str_contains($name, 'Green') => 2,
+            str_contains($name, 'Modern') => 3,
+            str_contains($name, 'Beach') => 4,
+            default => 5,
+        };
+        $photos = [];
+        for ($i = 0; $i < 5; $i++) {
+            $photos[] = $pool[($start + ($i * 2)) % count($pool)];
+        }
+
+        return $photos;
     }
 
     private function notify(User $contractor, Project $project): void

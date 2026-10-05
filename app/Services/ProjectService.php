@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Document;
 use App\Models\Project;
+use App\Models\ProjectInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -21,17 +22,27 @@ class ProjectService
     public function catalogue(User $homeowner, string $status, string $sort): array
     {
         $owned = $homeowner->projects();
+        $upcomingStatuses = Project::upcomingStatuses();
         $summary = [
-            'total' => (clone $owned)->count(),
+            'total' => (clone $owned)->whereNotIn('status', $upcomingStatuses)->count(),
             'ongoing' => (clone $owned)->where('status', Project::STATUS_IN_PROGRESS)->count(),
             'completed' => (clone $owned)->where('status', Project::STATUS_COMPLETED)->count(),
-            'value' => (float) (clone $owned)->sum('estimated_budget'),
+            'upcoming' => (clone $owned)->whereIn('status', $upcomingStatuses)->count(),
+            'value' => (float) (clone $owned)->whereNotIn('status', $upcomingStatuses)->sum('estimated_budget'),
         ];
 
         $query = $homeowner->projects()
-            ->with(['designer.professionalProfile', 'contractor.professionalProfile', 'progressStages', 'referenceImages'])
+            ->with([
+                'designer.professionalProfile',
+                'contractor.professionalProfile',
+                'progressStages',
+                'referenceImages',
+                'invitations.professional.professionalProfile',
+            ])
             ->when($status === 'ongoing', fn ($inner) => $inner->where('status', Project::STATUS_IN_PROGRESS))
             ->when($status === 'completed', fn ($inner) => $inner->where('status', Project::STATUS_COMPLETED))
+            ->when($status === 'upcoming', fn ($inner) => $inner->whereIn('status', $upcomingStatuses))
+            ->when(! in_array($status, ['ongoing', 'completed', 'upcoming'], true), fn ($inner) => $inner->whereNotIn('status', $upcomingStatuses))
             ->when($sort === 'oldest', fn ($inner) => $inner->oldest())
             ->when($sort === 'budget_high', fn ($inner) => $inner->orderByDesc('estimated_budget'))
             ->when($sort !== 'oldest' && $sort !== 'budget_high', fn ($inner) => $inner->latest());
@@ -40,14 +51,18 @@ class ProjectService
         $projects->each(function (Project $project) {
             $project->designer?->professionalProfile?->setRelation('user', $project->designer);
             $project->contractor?->professionalProfile?->setRelation('user', $project->contractor);
+            $project->invitations->each(function (ProjectInvitation $invitation) {
+                $invitation->professional?->professionalProfile?->setRelation('user', $invitation->professional);
+            });
         });
 
         return [
             'summary' => $summary,
             'ongoing' => $projects->where('status', Project::STATUS_IN_PROGRESS)->values(),
             'completed' => $projects->where('status', Project::STATUS_COMPLETED)->values(),
+            'upcoming' => $projects->filter(fn (Project $project) => $project->isUpcoming())->values(),
             'projects' => $projects,
-            'status' => in_array($status, ['ongoing', 'completed'], true) ? $status : 'all',
+            'status' => in_array($status, ['ongoing', 'completed', 'upcoming'], true) ? $status : 'all',
             'sort' => in_array($sort, ['oldest', 'budget_high'], true) ? $sort : 'newest',
         ];
     }
@@ -132,16 +147,39 @@ class ProjectService
     public function assignTeam(Project $project, ?int $designerId, ?int $contractorId): Project
     {
         return DB::transaction(function () use ($project, $designerId, $contractorId) {
-            $project->update([
-                'designer_id' => $designerId,
-                'contractor_id' => $contractorId,
-            ]);
-
-            $this->invitations->invite($project, 'designer', $designerId);
-            $this->invitations->invite($project, 'contractor', $contractorId);
+            $this->stageSelection($project, 'designer', $designerId);
+            $this->stageSelection($project, 'contractor', $contractorId);
 
             return $project->refresh();
         });
+    }
+
+    /**
+     * Selection creates a pending invitation. The professional is written onto
+     * the project only after they accept, so the team card cannot show them early.
+     */
+    private function stageSelection(Project $project, string $role, ?int $userId): void
+    {
+        if ($userId === null) {
+            return;
+        }
+
+        $accepted = $project->invitations()
+            ->where('role', $role)
+            ->where('user_id', $userId)
+            ->where('status', ProjectInvitation::STATUS_ACCEPTED)
+            ->exists();
+
+        $column = $role.'_id';
+
+        if ($accepted) {
+            $project->update([$column => $userId]);
+
+            return;
+        }
+
+        $project->update([$column => null]);
+        $this->invitations->invite($project, $role, $userId);
     }
 
     public function markAwaitingTeam(Project $project): void

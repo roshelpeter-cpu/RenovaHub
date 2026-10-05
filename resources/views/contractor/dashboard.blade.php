@@ -18,7 +18,7 @@
             <h1 class="rh-serif text-3xl text-[#123D2B]">{{ $greeting }}, {{ $first }}!</h1>
             <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#66756C]">Manage your renovation projects, suppliers, quotations and construction work from one workspace.</p>
         </div>
-        <img src="{{ asset('images/renova/hero.jpg') }}" alt="" class="h-36 w-full object-cover lg:h-full">
+        <img src="{{ asset('images/renova/hero.jpg') }}" alt="" class="h-36 w-full object-cover lg:h-40">
     </div>
 
     <section class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">

@@ -30,13 +30,10 @@
                             <p class="text-xs text-[#66756C]">Homeowner</p>
                         </div>
                     </div>
-                    @if ($tab === 'pending')
-                        <a href="{{ route('contractor.invitations.index', ['tab' => 'pending']) }}" class="text-sm text-[#123D2B] underline">View Details</a>
-                        <form method="POST" action="{{ route('contractor.invitations.reject', $invitation) }}" class="w-full">@csrf<button class="w-full rounded-full border border-[#c9c2b4] px-4 py-2 text-sm text-[#123D2B]">Reject</button></form>
-                        <form method="POST" action="{{ route('contractor.invitations.accept', $invitation) }}" class="w-full">@csrf<button class="w-full rounded-full bg-[#123D2B] px-4 py-2 text-sm text-white">Accept Offer</button></form>
-                    @elseif ($tab === 'accepted')
+                    <a href="{{ route('contractor.invitations.show', $invitation) }}" class="text-sm text-[#123D2B] underline">View Details</a>
+                    @if ($tab === 'accepted')
                         <a href="{{ route('contractor.projects.show', $project) }}" class="rounded-full bg-[#123D2B] px-4 py-2 text-sm text-white">View Project</a>
-                    @else
+                    @elseif ($tab === 'declined')
                         <p class="text-sm text-[#66756C]">Declined. The homeowner can invite another contractor.</p>
                     @endif
                 </div>

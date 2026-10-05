@@ -24,6 +24,7 @@ use App\Http\Controllers\Designer\DashboardController as DesignerDashboardContro
 use App\Http\Controllers\Designer\DesignConceptController;
 use App\Http\Controllers\Designer\DocumentController as DesignerDocumentController;
 use App\Http\Controllers\Designer\EarningController;
+use App\Http\Controllers\Designer\FinalDesignController as DesignerFinalDesignController;
 use App\Http\Controllers\Designer\InvitationController as DesignerInvitationController;
 use App\Http\Controllers\Designer\MessageController as DesignerMessageController;
 use App\Http\Controllers\Designer\MoodBoardController as DesignerMoodBoardController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Designer\RevisionController;
 use App\Http\Controllers\Designer\TaskController as DesignerTaskController;
 use App\Http\Controllers\Homeowner\DesignReviewController;
 use App\Http\Controllers\Homeowner\FeedbackController;
+use App\Http\Controllers\Homeowner\FinalDesignController as HomeownerFinalDesignController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\Homeowner\ChangeRequestController;
 use App\Http\Controllers\Homeowner\DocumentController;
@@ -118,6 +120,9 @@ Route::middleware([
         Route::post('projects/{project}/mood-board/feedback', [MoodBoardController::class, 'feedback'])->name('projects.mood-board.feedback');
         Route::post('projects/{project}/mood-board/approve', [MoodBoardController::class, 'approve'])->name('projects.mood-board.approve');
         Route::post('projects/{project}/mood-board/request-changes', [MoodBoardController::class, 'requestChanges'])->name('projects.mood-board.request-changes');
+        Route::get('projects/{project}/final-design', [HomeownerFinalDesignController::class, 'show'])->name('projects.final-design');
+        Route::post('projects/{project}/final-design/approve', [HomeownerFinalDesignController::class, 'approve'])->name('projects.final-design.approve');
+        Route::post('projects/{project}/final-design/request-changes', [HomeownerFinalDesignController::class, 'requestChanges'])->name('projects.final-design.request-changes');
         Route::post('projects/{project}/design-changes', [DesignReviewController::class, 'storeChange'])->name('projects.design-changes.store');
         Route::post('projects/{project}/concepts/{concept}/decide', [DesignReviewController::class, 'decideConcept'])->name('concepts.decide');
 
@@ -161,6 +166,7 @@ Route::middleware([
         Route::get('dashboard', DesignerDashboardController::class)->name('dashboard');
 
         Route::get('invitations', [DesignerInvitationController::class, 'index'])->name('invitations.index');
+        Route::get('invitations/{invitation}', [DesignerInvitationController::class, 'show'])->name('invitations.show');
         Route::post('invitations/{invitation}/accept', [DesignerInvitationController::class, 'accept'])->name('invitations.accept');
         Route::post('invitations/{invitation}/reject', [DesignerInvitationController::class, 'reject'])->name('invitations.reject');
 
@@ -173,6 +179,12 @@ Route::middleware([
         Route::get('projects/{project}/mood-board', [DesignerMoodBoardController::class, 'show'])->name('projects.mood-board');
         Route::post('projects/{project}/mood-board/items', [DesignerMoodBoardController::class, 'storeItem'])->name('projects.mood-board.items.store');
         Route::post('projects/{project}/mood-board/submit', [DesignerMoodBoardController::class, 'submit'])->name('projects.mood-board.submit');
+
+        Route::get('projects/{project}/final-design', [DesignerFinalDesignController::class, 'show'])->name('projects.final-design');
+        Route::post('projects/{project}/final-design/files', [DesignerFinalDesignController::class, 'storeFile'])->name('projects.final-design.files');
+        Route::post('projects/{project}/final-design/materials', [DesignerFinalDesignController::class, 'storeMaterial'])->name('projects.final-design.materials');
+        Route::post('projects/{project}/final-design/submit', [DesignerFinalDesignController::class, 'submit'])->name('projects.final-design.submit');
+        Route::post('final-design/changes/{change}', [DesignerFinalDesignController::class, 'respond'])->name('final-design.changes.respond');
 
         Route::get('design-concepts', [DesignConceptController::class, 'index'])->name('concepts.index');
         Route::post('projects/{project}/concepts', [DesignConceptController::class, 'store'])->name('concepts.store');
@@ -218,6 +230,7 @@ Route::middleware([
         Route::get('dashboard', ContractorDashboardController::class)->name('dashboard');
 
         Route::get('invitations', [ContractorInvitationController::class, 'index'])->name('invitations.index');
+        Route::get('invitations/{invitation}', [ContractorInvitationController::class, 'show'])->name('invitations.show');
         Route::post('invitations/{invitation}/accept', [ContractorInvitationController::class, 'accept'])->name('invitations.accept');
         Route::post('invitations/{invitation}/reject', [ContractorInvitationController::class, 'reject'])->name('invitations.reject');
 

@@ -23,12 +23,10 @@
                     <p class="mt-3 text-sm leading-relaxed text-[#66756C]">{{ \Illuminate\Support\Str::limit($project->description, 220) }}</p>
                 </div>
                 <div class="flex flex-row gap-2 lg:flex-col">
+                    <a href="{{ route('designer.invitations.show', $invitation) }}" class="rounded-full border border-[#123D2B] px-4 py-2 text-center text-sm text-[#123D2B]">View Details</a>
                     @if ($tab === 'accepted')
                         <a href="{{ route('designer.projects.show', $project) }}" class="rounded-full bg-[#123D2B] px-4 py-2 text-center text-sm text-white">View Project</a>
-                    @elseif ($tab === 'pending')
-                        <form method="POST" action="{{ route('designer.invitations.accept', $invitation) }}">@csrf<button class="w-full rounded-full bg-[#123D2B] px-4 py-2 text-sm text-white">Accept Offer</button></form>
-                        <form method="POST" action="{{ route('designer.invitations.reject', $invitation) }}">@csrf<button class="w-full rounded-full border border-[#c9c2b4] px-4 py-2 text-sm text-[#123D2B]">Reject</button></form>
-                    @else
+                    @elseif ($tab !== 'pending')
                         <p class="text-sm text-[#66756C]">This offer was declined. The private workspace stays closed.</p>
                     @endif
                 </div>

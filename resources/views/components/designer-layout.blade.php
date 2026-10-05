@@ -3,13 +3,13 @@
 @php
     $navCounts = $navCounts ?? ['notifications' => 0];
     $user = auth()->user();
-    $onProject = request()->routeIs('designer.projects.*', 'designer.concepts.show', 'designer.concepts.store', 'designer.concepts.update', 'designer.concepts.submit');
+    $designWork = request()->routeIs('designer.design-work', 'designer.mood-boards.*', 'designer.projects.mood-board', 'designer.projects.final-design', 'designer.concepts.*');
+    $onProject = request()->routeIs('designer.projects.*', 'designer.concepts.show', 'designer.concepts.store', 'designer.concepts.update', 'designer.concepts.submit') && ! $designWork;
     $links = [
         ['label' => 'Dashboard', 'href' => route('designer.dashboard'), 'active' => request()->routeIs('designer.dashboard')],
         ['label' => 'My Projects', 'href' => route('designer.projects.index'), 'active' => $onProject],
         ['label' => 'Invitations', 'href' => route('designer.invitations.index'), 'active' => request()->routeIs('designer.invitations.*')],
-        ['label' => 'Design Work', 'href' => route('designer.design-work'), 'active' => request()->routeIs('designer.design-work')],
-        ['label' => 'Mood Boards', 'href' => route('designer.mood-boards.index'), 'active' => request()->routeIs('designer.mood-boards.*')],
+        ['label' => 'Design Work', 'href' => route('designer.design-work'), 'active' => $designWork],
         ['label' => 'Documents', 'href' => route('designer.documents.index'), 'active' => request()->routeIs('designer.documents.*')],
         ['label' => 'Tasks', 'href' => route('designer.tasks.index'), 'active' => request()->routeIs('designer.tasks.*')],
         ['label' => 'Messages', 'href' => route('designer.messages.index'), 'active' => request()->routeIs('designer.messages.*')],

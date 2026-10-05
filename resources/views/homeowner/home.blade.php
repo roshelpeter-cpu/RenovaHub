@@ -182,8 +182,12 @@
                         @forelse ($actions as $action)
                             <li>
                                 <a href="{{ $action['url'] }}" class="flex items-start gap-3 py-3">
-                                    <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E7F0E4] text-[#123D2B]">
-                                        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 4h10v16H7Z"/></svg>
+                                    <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ ($action['icon'] ?? '') === 'alert' ? 'bg-[#C4503A] text-white' : 'bg-[#E7F0E4] text-[#123D2B]' }}">
+                                        @if (($action['icon'] ?? '') === 'alert')
+                                            !
+                                        @else
+                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 4h10v16H7Z"/></svg>
+                                        @endif
                                     </span>
                                     <span class="min-w-0 flex-1">
                                         <span class="block text-sm font-medium text-[#123D2B]">{{ $action['title'] }}</span>

@@ -12,10 +12,11 @@
                 <a href="{{ route('homeowner.projects.create') }}" class="inline-flex shrink-0 items-center justify-center rounded-full bg-[#123D2B] px-5 py-2.5 text-sm font-medium text-white">+ Create New Project</a>
             </div>
 
-            <dl class="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <dl class="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 @foreach ([
-                    ['Total Projects', $summary['total'], 'M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z'],
+                    ['Started Projects', $summary['total'], 'M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z'],
                     ['Ongoing', $summary['ongoing'], 'M12 7v5l3 2M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z'],
+                    ['Upcoming', $summary['upcoming'], 'M8 7V4h8v3M6 7h12v13H6Z'],
                     ['Completed', $summary['completed'], 'M5 13l4 4L19 7'],
                     ['Total Project Value', \App\Models\Project::compactMoney($summary['value']), 'M4 7h16v12H4Z M8 7V4h8v3'],
                 ] as [$label, $value, $icon])
@@ -37,6 +38,7 @@
                         'all' => 'All ('.$summary['total'].')',
                         'ongoing' => 'Ongoing ('.$summary['ongoing'].')',
                         'completed' => 'Completed ('.$summary['completed'].')',
+                        'upcoming' => 'Upcoming ('.$summary['upcoming'].')',
                     ] as $value => $label)
                         <a href="{{ route('homeowner.projects.index', array_filter(['status' => $value === 'all' ? null : $value, 'sort' => $sort === 'newest' ? null : $sort])) }}" class="rounded-full px-4 py-2 text-sm {{ $status === $value ? 'bg-[#123D2B] text-white' : 'bg-[#F6F1E7] text-[#18352A]' }}" @if($status === $value) aria-current="page" @endif>{{ $label }}</a>
                     @endforeach
@@ -67,7 +69,19 @@
                 ])
             </div>
         @else
-            @if ($status !== 'completed' && $ongoing->isNotEmpty())
+            @if ($status === 'upcoming' && $upcoming->isNotEmpty())
+                <section class="mt-8">
+                    <h2 class="font-serif text-2xl text-[#123D2B]">Upcoming Projects ({{ $upcoming->count() }})</h2>
+                    <p class="mt-1 text-sm text-[#66756C]">These projects have been created and are waiting to start. They stay here until work begins.</p>
+                    <div class="mt-4 grid gap-5 lg:grid-cols-2">
+                        @foreach ($upcoming as $project)
+                            @include('homeowner.projects.partials.card', ['project' => $project, 'wide' => true])
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if ($status !== 'completed' && $status !== 'upcoming' && $ongoing->isNotEmpty())
                 <section class="mt-8">
                     <h2 class="font-serif text-2xl text-[#123D2B]">Ongoing Projects ({{ $ongoing->count() }})</h2>
                     <div class="mt-4 grid gap-5 lg:grid-cols-2">
@@ -78,7 +92,7 @@
                 </section>
             @endif
 
-            @if ($status !== 'ongoing' && $completed->isNotEmpty())
+            @if ($status !== 'ongoing' && $status !== 'upcoming' && $completed->isNotEmpty())
                 <section class="mt-10">
                     <h2 class="font-serif text-2xl text-[#123D2B]">Completed Projects ({{ $completed->count() }})</h2>
                     <div class="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">

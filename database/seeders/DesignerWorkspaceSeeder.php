@@ -271,7 +271,14 @@ class DesignerWorkspaceSeeder extends Seeder
             'expected_completion_date' => $end,
             'status' => $accepted ? Project::STATUS_IN_PROGRESS : Project::STATUS_AWAITING_TEAM,
             'progress' => $designProgress,
-            'cover_image' => $photos[0],
+            'cover_image' => match (true) {
+                str_contains($name, 'Apartment') => 'images/projects/apartment.jpg',
+                str_contains($name, 'Coastal') => 'images/projects/coastal-villa.jpg',
+                str_contains($name, 'Green Valley') => 'images/projects/garden-house.jpg',
+                str_contains($name, 'Modern') => 'images/projects/modern-house.jpg',
+                str_contains($name, 'Luxury') => 'images/projects/living.jpg',
+                default => 'images/projects/render.jpg',
+            },
             'designer_id' => $accepted ? $designer?->id : null,
             'contractor_id' => $accepted ? $contractor?->id : null,
             'workspace_meta' => [
@@ -290,7 +297,24 @@ class DesignerWorkspaceSeeder extends Seeder
             ],
         ]);
 
-        foreach ($photos as $path) {
+        $gallery = [
+            'images/projects/apartment.jpg',
+            'images/projects/living.jpg',
+            'images/projects/kitchen.jpg',
+            'images/projects/bathroom.jpg',
+            'images/projects/render.jpg',
+            'images/projects/coastal-villa.jpg',
+            'images/projects/garden-house.jpg',
+            'images/projects/modern-house.jpg',
+        ];
+        $offset = match (true) {
+            str_contains($name, 'Coastal') => 5,
+            str_contains($name, 'Green') => 6,
+            str_contains($name, 'Modern') => 7,
+            str_contains($name, 'Luxury') => 1,
+            default => 0,
+        };
+        foreach (array_slice(array_merge(array_slice($gallery, $offset), array_slice($gallery, 0, $offset)), 0, 5) as $path) {
             $project->referenceImages()->create(['path' => $path, 'original_name' => basename($path)]);
         }
 
