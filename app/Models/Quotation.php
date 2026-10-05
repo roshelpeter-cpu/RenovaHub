@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Quotation extends Model
 {
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_SUBMITTED = 'submitted';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_APPROVED = 'approved';
@@ -73,6 +77,8 @@ class Quotation extends Model
     public function reviewLabel(): string
     {
         return match ($this->status) {
+            self::STATUS_DRAFT => 'Draft',
+            self::STATUS_SUBMITTED => 'Submitted',
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_CLARIFICATION => 'In Review',
@@ -87,6 +93,8 @@ class Quotation extends Model
         }
 
         return match ($this->status) {
+            self::STATUS_DRAFT => 'Draft',
+            self::STATUS_SUBMITTED => 'Submitted',
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_CLARIFICATION => 'Clarification Required',
@@ -98,5 +106,23 @@ class Quotation extends Model
     public function money(mixed $amount): string
     {
         return 'LKR '.number_format((float) $amount, 2);
+    }
+
+    /**
+     * Contractor-facing labels follow draft, submitted, then homeowner review.
+     * The contractor cannot move a quotation to approved.
+     */
+    public function contractorStatusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DRAFT => 'Draft',
+            self::STATUS_SUBMITTED => 'Submitted',
+            self::STATUS_PENDING => 'In Review',
+            self::STATUS_CLARIFICATION => 'Clarification Requested',
+            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_EXPIRED => 'Expired',
+            default => 'Draft',
+        };
     }
 }

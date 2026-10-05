@@ -13,7 +13,7 @@ class ProjectTaskPolicy
      */
     public function view(User $user, ProjectTask $task): bool
     {
-        return $user->can('view', $task->project);
+        return $user->can('view', $task->project) || $user->can('construct', $task->project);
     }
 
     /**

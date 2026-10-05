@@ -35,6 +35,8 @@ class ChangeRequest extends Model
         'designer_response',
         'cost_impact',
         'timeline_impact',
+        'feasibility',
+        'design_affected',
         'attachment',
     ];
 
@@ -42,6 +44,7 @@ class ChangeRequest extends Model
     {
         return [
             'cost_impact' => 'decimal:2',
+            'design_affected' => 'boolean',
             'approved_at' => 'datetime',
         ];
     }

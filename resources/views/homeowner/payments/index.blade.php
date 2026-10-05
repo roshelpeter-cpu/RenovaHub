@@ -54,7 +54,7 @@
                         <tr class="border-t border-[#ece7dc]">
                             <td class="px-4 py-3 font-medium text-[#123D2B]">{{ $payment->reference }}</td>
                             <td class="px-4 py-3">@include('homeowner.partials.project-chip', ['project' => $payment->project])</td>
-                            <td class="px-4 py-3">{{ $payment->quotation?->number ?? '—' }}</td>
+                            <td class="px-4 py-3">{{ $payment->quotation?->number ?? ($payment->supplierOrder ? 'Supplier order' : '—') }}</td>
                             <td class="px-4 py-3">{{ $payment->formatMoney($payment->renovationAmount()) }}</td>
                             <td class="px-4 py-3">{{ $payment->formatMoney($payment->platformFee()) }}</td>
                             <td class="px-4 py-3">{{ $payment->money() }}</td>

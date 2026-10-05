@@ -58,7 +58,9 @@ class QuotationService
             abort(404);
         }
 
-        $summaryBase = Quotation::query()->whereIn('project_id', $ownedIds);
+        $summaryBase = Quotation::query()
+            ->whereIn('project_id', $ownedIds)
+            ->where('status', '!=', Quotation::STATUS_DRAFT);
 
         $matchingIds = $this->constrain(Quotation::query()->whereIn('project_id', $ownedIds), $filters)
             ->distinct()
@@ -80,7 +82,7 @@ class QuotationService
             'professionals' => $allowedProfessionals,
             'summary' => [
                 'total' => (clone $summaryBase)->count(),
-                'pending' => (clone $summaryBase)->where('status', Quotation::STATUS_PENDING)->count(),
+                'pending' => (clone $summaryBase)->whereIn('status', [Quotation::STATUS_PENDING, Quotation::STATUS_SUBMITTED])->count(),
                 'approved' => (clone $summaryBase)->where('status', Quotation::STATUS_APPROVED)->count(),
                 'rejected' => (clone $summaryBase)->where('status', Quotation::STATUS_REJECTED)->count(),
             ],
@@ -124,6 +126,9 @@ class QuotationService
                     ->orWhereHas('project', fn ($project) => $project->where('name', 'like', $term));
             });
         }
+
+        // Drafts stay on the contractor workspace until they are submitted.
+        $query->where('status', '!=', Quotation::STATUS_DRAFT);
 
         return $query;
     }

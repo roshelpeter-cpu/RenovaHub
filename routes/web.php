@@ -1,5 +1,19 @@
 <?php
 
+use App\Http\Controllers\Contractor\BudgetController as ContractorBudgetController;
+use App\Http\Controllers\Contractor\ChangeRequestController as ContractorChangeRequestController;
+use App\Http\Controllers\Contractor\DashboardController as ContractorDashboardController;
+use App\Http\Controllers\Contractor\DocumentController as ContractorDocumentController;
+use App\Http\Controllers\Contractor\EarningsController as ContractorEarningsController;
+use App\Http\Controllers\Contractor\InvitationController as ContractorInvitationController;
+use App\Http\Controllers\Contractor\MessageController as ContractorMessageController;
+use App\Http\Controllers\Contractor\NotificationController as ContractorNotificationController;
+use App\Http\Controllers\Contractor\ProfileController as ContractorProfileController;
+use App\Http\Controllers\Contractor\ProjectController as ContractorProjectController;
+use App\Http\Controllers\Contractor\QuotationController as ContractorQuotationController;
+use App\Http\Controllers\Contractor\SupplierController as ContractorSupplierController;
+use App\Http\Controllers\Contractor\SupplierOrderController as ContractorSupplierOrderController;
+use App\Http\Controllers\Contractor\SupplierPriceRequestController as ContractorSupplierPriceRequestController;
 use App\Http\Controllers\Contractor\TaskController as ContractorTaskController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Designer\DashboardController as DesignerDashboardController;
@@ -190,6 +204,73 @@ Route::middleware([
 
         Route::get('notifications', [DesignerNotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/{notification}/read', [DesignerNotificationController::class, 'read'])->name('notifications.read');
+    });
+
+    // Contractor workspace. Policies check the assigned contractor again, not only this middleware.
+    Route::prefix('contractor')->middleware('contractor')->name('contractor.')->group(function () {
+        Route::get('dashboard', ContractorDashboardController::class)->name('dashboard');
+
+        Route::get('invitations', [ContractorInvitationController::class, 'index'])->name('invitations.index');
+        Route::post('invitations/{invitation}/accept', [ContractorInvitationController::class, 'accept'])->name('invitations.accept');
+        Route::post('invitations/{invitation}/reject', [ContractorInvitationController::class, 'reject'])->name('invitations.reject');
+
+        Route::get('projects', [ContractorProjectController::class, 'index'])->name('projects.index');
+        Route::get('projects/{project}', [ContractorProjectController::class, 'show'])->name('projects.show');
+        Route::get('projects/{project}/messages', [ContractorMessageController::class, 'project'])->name('projects.messages');
+        Route::get('projects/{project}/{section}', [ContractorProjectController::class, 'section'])
+            ->whereIn('section', ['quotations', 'budget', 'suppliers', 'tasks', 'documents', 'change-requests'])
+            ->name('projects.section');
+
+        Route::get('quotations', [ContractorQuotationController::class, 'index'])->name('quotations.index');
+        Route::get('quotations/create', [ContractorQuotationController::class, 'create'])->name('quotations.create');
+        Route::post('quotations', [ContractorQuotationController::class, 'store'])->name('quotations.store');
+        Route::get('quotations/{quotation}', [ContractorQuotationController::class, 'show'])->name('quotations.show');
+        Route::get('quotations/{quotation}/edit', [ContractorQuotationController::class, 'edit'])->name('quotations.edit');
+        Route::put('quotations/{quotation}', [ContractorQuotationController::class, 'update'])->name('quotations.update');
+        Route::post('quotations/{quotation}/submit', [ContractorQuotationController::class, 'submit'])->name('quotations.submit');
+
+        Route::get('budget', [ContractorBudgetController::class, 'index'])->name('budget.index');
+        Route::put('budget/{project}', [ContractorBudgetController::class, 'update'])->name('budget.update');
+
+        Route::get('suppliers', [ContractorSupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('suppliers/{supplier}', [ContractorSupplierController::class, 'show'])->name('suppliers.show');
+        Route::get('suppliers/{supplier}/request-price', [ContractorSupplierPriceRequestController::class, 'create'])->name('suppliers.request-price');
+        Route::post('suppliers/{supplier}/request-price', [ContractorSupplierPriceRequestController::class, 'store'])->name('suppliers.request-price.store');
+        Route::get('prices/{price}', [ContractorSupplierPriceRequestController::class, 'show'])->name('prices.show');
+        Route::post('prices/{price}/revision', [ContractorSupplierPriceRequestController::class, 'revise'])->name('prices.revision');
+
+        Route::get('orders', [ContractorSupplierOrderController::class, 'index'])->name('orders.index');
+        Route::post('prices/{price}/order', [ContractorSupplierOrderController::class, 'store'])->name('orders.store');
+        Route::get('orders/{order}', [ContractorSupplierOrderController::class, 'show'])->name('orders.show');
+        Route::put('orders/{order}', [ContractorSupplierOrderController::class, 'update'])->name('orders.update');
+
+        Route::get('tasks', [ContractorTaskController::class, 'index'])->name('tasks.index');
+        Route::post('tasks', [ContractorTaskController::class, 'storeForWorkspace'])->name('tasks.store');
+        Route::put('tasks/{task}', [ContractorTaskController::class, 'update'])->name('tasks.update');
+
+        Route::get('documents', [ContractorDocumentController::class, 'index'])->name('documents.index');
+        Route::post('documents', [ContractorDocumentController::class, 'store'])->name('documents.store');
+        Route::get('documents/{document}', [ContractorDocumentController::class, 'show'])->name('documents.show');
+        Route::get('documents/{document}/download', [ContractorDocumentController::class, 'download'])->name('documents.download');
+        Route::delete('documents/{document}', [ContractorDocumentController::class, 'destroy'])->name('documents.destroy');
+
+        Route::get('change-requests', [ContractorChangeRequestController::class, 'index'])->name('change-requests.index');
+        Route::get('change-requests/{changeRequest}', [ContractorChangeRequestController::class, 'show'])->name('change-requests.show');
+        Route::post('change-requests/{changeRequest}/respond', [ContractorChangeRequestController::class, 'respond'])->name('change-requests.respond');
+
+        Route::get('messages', [ContractorMessageController::class, 'index'])->name('messages.index');
+        Route::get('messages/{conversation}', [ContractorMessageController::class, 'show'])->name('messages.show');
+
+        Route::get('earnings', [ContractorEarningsController::class, 'index'])->name('earnings.index');
+        Route::get('earnings/{earning}', [ContractorEarningsController::class, 'show'])->name('earnings.show');
+
+        Route::get('profile', [ContractorProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('profile', [ContractorProfileController::class, 'update'])->name('profile.update');
+        Route::post('profile/portfolio', [ContractorProfileController::class, 'storePortfolio'])->name('profile.portfolio.store');
+        Route::get('profile/projects/{caseStudy}', [ContractorProfileController::class, 'project'])->name('profile.project');
+
+        Route::get('notifications', [ContractorNotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/{notification}/read', [ContractorNotificationController::class, 'read'])->name('notifications.read');
     });
 });
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])

@@ -13,7 +13,7 @@ class DocumentPolicy
      */
     public function view(User $user, Document $document): bool
     {
-        if ($user->can('view', $document->project)) {
+        if ($user->can('view', $document->project) || $user->can('construct', $document->project)) {
             return true;
         }
 
@@ -36,12 +36,23 @@ class DocumentPolicy
         return $user->can('design', $project) && ! $project->isClosedRecord();
     }
 
+    public function uploadConstruction(User $user, Project $project): bool
+    {
+        return $user->can('construct', $project) && ! $project->isClosedRecord();
+    }
+
     public function delete(User $user, Document $document): bool
     {
         if ($user->isDesigner()) {
             return $user->can('design', $document->project)
                 && (int) $document->uploaded_by === (int) $user->id
                 && in_array($document->category, Document::designerCategories(), true);
+        }
+
+        if ($user->isContractor()) {
+            return $user->can('construct', $document->project)
+                && (int) $document->uploaded_by === (int) $user->id
+                && ! $document->project->isClosedRecord();
         }
 
         return $user->can('contribute', $document->project);

@@ -18,8 +18,10 @@ class ProjectTask extends Model
     protected $fillable = [
         'project_id',
         'assignee_id',
+        'assignee_label',
         'name',
         'description',
+        'notes',
         'category',
         'status',
         'priority',
@@ -111,8 +113,23 @@ class ProjectTask extends Model
         };
     }
 
+    public function contractorStatusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_IN_PROGRESS => 'In Progress',
+            self::STATUS_COMPLETED => 'Completed',
+            self::STATUS_BLOCKED => 'Blocked',
+            'not_started' => 'Not Started',
+            default => 'Pending',
+        };
+    }
+
     public function assigneeLabel(): string
     {
+        if (is_string($this->assignee_label) && $this->assignee_label !== '') {
+            return $this->assignee_label;
+        }
+
         $profile = $this->assignee?->professionalProfile;
 
         if ($profile?->business_name) {

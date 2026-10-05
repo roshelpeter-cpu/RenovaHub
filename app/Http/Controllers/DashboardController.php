@@ -10,8 +10,8 @@ use Illuminate\View\View;
 class DashboardController extends Controller
 {
     /**
-     * Homeowners see their own project summary. Other roles keep the
-     * existing account dashboard until those workspaces are built.
+     * Homeowners see their own project summary. Designers and contractors
+     * are sent to their own workspaces.
      */
     public function __invoke(Request $request): View|RedirectResponse
     {
@@ -19,6 +19,10 @@ class DashboardController extends Controller
 
         if ($user->isDesigner()) {
             return redirect()->route('designer.dashboard');
+        }
+
+        if ($user->isContractor()) {
+            return redirect()->route('contractor.dashboard');
         }
 
         if (! $user->isHomeowner()) {

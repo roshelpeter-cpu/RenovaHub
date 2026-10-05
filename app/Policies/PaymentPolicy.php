@@ -9,15 +9,17 @@ class PaymentPolicy
 {
     public function view(User $user, Payment $payment): bool
     {
-        return $user->can('view', $payment->project);
+        return $user->can('view', $payment->project) || $user->can('construct', $payment->project);
     }
 
     /**
-     * Checkout stays on open projects. Historical payments remain viewable.
+     * Checkout stays with the homeowner. The contractor can see the status
+     * but cannot mark a payment paid from the browser.
      */
     public function pay(User $user, Payment $payment): bool
     {
-        return $this->view($user, $payment)
+        return $user->isHomeowner()
+            && (int) $payment->project->user_id === (int) $user->id
             && $payment->status === Payment::STATUS_PENDING
             && ! $payment->project->isClosedRecord();
     }

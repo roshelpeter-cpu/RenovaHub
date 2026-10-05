@@ -106,4 +106,14 @@ class User extends Authenticatable
     {
         return $this->role === 'contractor';
     }
+
+    public function contractorProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'contractor_id');
+    }
+
+    public function contractorEarnings(): HasMany
+    {
+        return $this->hasMany(ContractorEarning::class, 'contractor_id');
+    }
 }

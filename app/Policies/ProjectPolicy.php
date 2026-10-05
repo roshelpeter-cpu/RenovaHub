@@ -63,4 +63,21 @@ class ProjectPolicy
             ->where('status', 'accepted')
             ->exists();
     }
+
+    /**
+     * Construction records open only for the contractor who accepted the offer.
+     * A changed project id in the URL is rejected even if the user is a contractor.
+     */
+    public function construct(User $user, Project $project): bool
+    {
+        if (! $user->isContractor() || (int) $project->contractor_id !== (int) $user->id) {
+            return false;
+        }
+
+        return $project->invitations()
+            ->where('user_id', $user->id)
+            ->where('role', 'contractor')
+            ->where('status', 'accepted')
+            ->exists();
+    }
 }

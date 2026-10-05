@@ -25,7 +25,7 @@ class PaymentController extends Controller
         $payments = Payment::query()
             ->whereIn('project_id', $projects->pluck('id'))
             ->when($selected > 0, fn ($query) => $query->where('project_id', $selected))
-            ->with(['project', 'quotation'])
+            ->with(['project', 'quotation', 'supplierOrder.supplier'])
             ->latest()
             ->paginate(12)
             ->withQueryString();

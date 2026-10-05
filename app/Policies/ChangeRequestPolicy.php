@@ -10,7 +10,7 @@ class ChangeRequestPolicy
 {
     public function view(User $user, ChangeRequest $changeRequest): bool
     {
-        return $user->can('view', $changeRequest->project);
+        return $user->can('view', $changeRequest->project) || $user->can('construct', $changeRequest->project);
     }
 
     /**
@@ -23,6 +23,21 @@ class ChangeRequestPolicy
 
     public function update(User $user, ChangeRequest $changeRequest): bool
     {
-        return $this->view($user, $changeRequest);
+        return $user->can('view', $changeRequest->project);
+    }
+
+    /**
+     * Cost and time impact belong to the assigned contractor. Approving the
+     * change stays with the homeowner, so this method cannot set approved.
+     */
+    public function respond(User $user, ChangeRequest $changeRequest): bool
+    {
+        return $user->can('construct', $changeRequest->project)
+            && ! $changeRequest->project->isClosedRecord()
+            && in_array($changeRequest->status, [
+                ChangeRequest::STATUS_SUBMITTED,
+                ChangeRequest::STATUS_UNDER_REVIEW,
+                ChangeRequest::STATUS_COST_PROVIDED,
+            ], true);
     }
 }

@@ -22,6 +22,9 @@ class Payment extends Model
     protected $fillable = [
         'project_id',
         'quotation_id',
+        'supplier_order_id',
+        'payer_id',
+        'payee_id',
         'reference',
         'amount',
         'renovation_amount',
@@ -29,6 +32,7 @@ class Payment extends Model
         'fee_percent',
         'currency',
         'method',
+        'provider',
         'status',
         'provider_reference',
         'paid_at',
@@ -56,6 +60,21 @@ class Payment extends Model
         return $this->belongsTo(Quotation::class);
     }
 
+    public function supplierOrder(): BelongsTo
+    {
+        return $this->belongsTo(SupplierOrder::class);
+    }
+
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payer_id');
+    }
+
+    public function payee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payee_id');
+    }
+
     public function statusLabel(): string
     {
         return ucfirst($this->status);
@@ -77,11 +96,16 @@ class Payment extends Model
     }
 
     /**
-     * The stored amount remains the renovation value used by project totals.
-     * The homeowner pays that amount plus the platform fee.
+     * Quotation payments add the service fee on top of the renovation amount.
+     * A supplier-order request bills the agreed supplier price. The same fee
+     * is withheld on the contractor earning, so it is not charged twice.
      */
     public function homeownerTotal(): float
     {
+        if ($this->supplier_order_id) {
+            return $this->renovationAmount();
+        }
+
         return $this->renovationAmount() + $this->platformFee();
     }
 
