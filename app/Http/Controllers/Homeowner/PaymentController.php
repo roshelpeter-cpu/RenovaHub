@@ -32,7 +32,7 @@ class PaymentController extends Controller
             ->whereIn('project_id', $projectIds)
             ->with('project')
             ->latest()
-            ->paginate(12)
+            ->paginate(15)
             ->withQueryString();
 
         $all = Payment::query()->whereIn('project_id', $projectIds)->get();

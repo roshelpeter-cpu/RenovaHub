@@ -69,14 +69,19 @@
                 <tbody>
                     @forelse ($history as $payment)
                         <tr class="border-t border-[#ece7dc]">
-                            <td class="px-4 py-3 text-[#123D2B]">{{ $payment->project->name }}</td>
+                            <td class="px-4 py-3 text-[#123D2B]">
+                                <p>{{ $payment->project->name }}</p>
+                                @if ($payment->notes && ! $payment->budget_submission_id)
+                                    <p class="mt-0.5 text-xs text-[#66756C]">{{ $payment->notes }}</p>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">{{ $payment->reference }}</td>
                             <td class="px-4 py-3">{{ $payment->money() }}</td>
                             <td class="px-4 py-3">{{ ($payment->paid_at ?? $payment->created_at)?->format('j M Y') }}</td>
                             <td class="px-4 py-3">{{ $payment->status === \App\Models\Payment::STATUS_PAID ? 'Paid' : $payment->statusLabel() }}</td>
                             <td class="px-4 py-3">
                                 @if ($payment->status === \App\Models\Payment::STATUS_PAID)
-                                    <button type="button" class="font-medium text-[#123D2B] underline" data-receipt-open="payment-{{ $payment->id }}">View</button>
+                                    <button type="button" class="font-medium text-[#123D2B] underline" data-receipt-open="payment-{{ $payment->id }}">View Receipt</button>
                                 @elseif ($payment->status === \App\Models\Payment::STATUS_PENDING)
                                     <a href="{{ route('homeowner.payments.pay', [$payment->project, $payment]) }}" class="font-medium text-[#123D2B] underline">Pay Now</a>
                                 @else
