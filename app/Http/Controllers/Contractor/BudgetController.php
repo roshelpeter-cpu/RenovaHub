@@ -13,14 +13,19 @@ use Illuminate\View\View;
 
 class BudgetController extends Controller
 {
-    public function index(Request $request, ContractorWorkspaceService $workspace): View
+    public function index(Request $request, ContractorWorkspaceService $workspace, \App\Services\Contractor\ProjectBudgetService $budgets): View
     {
-        $projects = $workspace->accepted($request->user())->with('budgetItems')->orderBy('name')->get();
+        $projects = $workspace->accepted($request->user())
+            ->with(['budgetItems', 'budgetSubmissions.payment', 'constructionAssignment.quotation', 'changeRequests'])
+            ->orderBy('name')
+            ->get();
         $selected = $projects->firstWhere('id', $request->integer('project')) ?? $projects->first();
 
         return view('contractor.budget.index', [
             'projects' => $projects,
             'project' => $selected,
+            'preview' => $selected ? $budgets->preview($selected) : null,
+            'submission' => $selected?->budgetSubmissions->sortByDesc('id')->first(),
         ]);
     }
 
@@ -29,5 +34,13 @@ class BudgetController extends Controller
         $budgets->updateSpend($project, $request->validated('spent'));
 
         return back()->with('status', 'Budget spend updated.');
+    }
+
+    public function submit(Request $request, Project $project, ContractorWorkspaceService $workspace, \App\Services\Contractor\ProjectBudgetService $budgets): RedirectResponse
+    {
+        $project = $workspace->findAccepted($request->user(), $project);
+        $budgets->submit($request->user(), $project);
+
+        return back()->with('status', 'Final budget sent to the homeowner. You cannot approve it yourself.');
     }
 }

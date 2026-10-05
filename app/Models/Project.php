@@ -171,6 +171,31 @@ class Project extends Model
         return $this->hasMany(SupplierOrder::class);
     }
 
+    public function materialRequirements(): HasMany
+    {
+        return $this->hasMany(MaterialRequirement::class);
+    }
+
+    public function procurementProposals(): HasMany
+    {
+        return $this->hasMany(ProcurementProposal::class);
+    }
+
+    public function constructionQuotations(): HasMany
+    {
+        return $this->hasMany(ConstructionFirmQuotation::class);
+    }
+
+    public function constructionAssignment(): HasOne
+    {
+        return $this->hasOne(ConstructionAssignment::class);
+    }
+
+    public function budgetSubmissions(): HasMany
+    {
+        return $this->hasMany(BudgetSubmission::class);
+    }
+
     public function contractorEarnings(): HasMany
     {
         return $this->hasMany(ContractorEarning::class);

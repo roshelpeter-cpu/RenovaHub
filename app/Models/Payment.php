@@ -23,6 +23,7 @@ class Payment extends Model
         'project_id',
         'quotation_id',
         'supplier_order_id',
+        'budget_submission_id',
         'payer_id',
         'payee_id',
         'reference',
@@ -63,6 +64,16 @@ class Payment extends Model
     public function supplierOrder(): BelongsTo
     {
         return $this->belongsTo(SupplierOrder::class);
+    }
+
+    public function budgetSubmission(): BelongsTo
+    {
+        return $this->belongsTo(BudgetSubmission::class);
+    }
+
+    public function allocations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PaymentAllocation::class);
     }
 
     public function payer(): BelongsTo

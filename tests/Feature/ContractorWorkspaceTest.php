@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\BudgetSubmission;
 use App\Models\ChangeRequest;
+use App\Models\ConstructionFirm;
+use App\Models\ConstructionFirmQuotation;
+use App\Models\DesignConcept;
 use App\Models\ContractorEarning;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
@@ -17,6 +21,7 @@ use App\Models\SupplierOrder;
 use App\Models\SupplierPrice;
 use App\Models\SupplierPriceRequest;
 use App\Models\User;
+use App\Services\Contractor\ProcurementService;
 use App\Services\Contractor\SupplierService;
 use App\Services\ConversationService;
 use App\Services\PaymentService;
@@ -290,6 +295,108 @@ class ContractorWorkspaceTest extends TestCase
         $this->assertSame('490000.00', $earning->net_amount);
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertSame(SupplierOrder::STATUS_PAID, $order->fresh()->status);
+    }
+
+    public function test_homeowner_approves_the_firm_and_the_single_budget_payment_stays_pending(): void
+    {
+        [$homeowner, $contractor, $project] = $this->assigned();
+        $project->budgetItems()->create(['category' => 'Design & Planning', 'amount' => 200000, 'spent_percent' => 0, 'sort_order' => 1]);
+        $project->budgetItems()->create(['category' => 'Contractor Fee', 'amount' => 100000, 'spent_percent' => 0, 'sort_order' => 2]);
+
+        DesignConcept::query()->create([
+            'project_id' => $project->id,
+            'designer_id' => $homeowner->id,
+            'title' => 'Approved package',
+            'status' => DesignConcept::STATUS_APPROVED,
+            'approved_at' => now(),
+            'submitted_at' => now(),
+        ]);
+
+        $firmA = ConstructionFirm::query()->create(['name' => 'Urban Builders', 'slug' => 'urban-builders', 'city' => 'Colombo']);
+        $firmB = ConstructionFirm::query()->create(['name' => 'BuildRight', 'slug' => 'buildright', 'city' => 'Colombo']);
+        $procurement = app(ProcurementService::class);
+        $procurement->recordFirmQuote($contractor, $project, [
+            'construction_firm_id' => $firmA->id,
+            'price' => 1650000,
+            'duration_days' => 105,
+            'start_date' => now()->addDay()->toDateString(),
+            'completion_date' => now()->addDays(106)->toDateString(),
+            'scope' => 'Interior fit-out',
+            'warranty' => '12 months',
+        ]);
+        $procurement->recordFirmQuote($contractor, $project, [
+            'construction_firm_id' => $firmB->id,
+            'price' => 1800000,
+            'duration_days' => 90,
+            'start_date' => now()->addDay()->toDateString(),
+            'completion_date' => now()->addDays(91)->toDateString(),
+            'scope' => 'Interior fit-out',
+            'warranty' => '12 months',
+        ]);
+
+        $ids = ConstructionFirmQuotation::query()->where('project_id', $project->id)->pluck('id')->all();
+        $proposal = $procurement->sendFirmOptions($contractor, $project, $ids);
+
+        $this->actingAs($contractor)->post(route('homeowner.proposals.decide', $proposal), [
+            'decision' => 'approve',
+            'option_id' => $proposal->options()->first()->id,
+        ])->assertForbidden();
+
+        $this->actingAs($homeowner)->post(route('homeowner.proposals.decide', $proposal), [
+            'decision' => 'approve',
+            'option_id' => $proposal->options()->first()->id,
+        ])->assertRedirect();
+
+        $approved = ConstructionFirmQuotation::query()->where('status', ConstructionFirmQuotation::STATUS_APPROVED)->first();
+        $this->actingAs($contractor)->post(route('contractor.firms.assign', [$project, $approved]))->assertRedirect();
+
+        $supplier = Supplier::query()->create(['name' => 'ABC', 'slug' => 'abc-test', 'city' => 'Colombo', 'location' => 'Colombo, Sri Lanka']);
+        $request = SupplierPriceRequest::query()->create([
+            'project_id' => $project->id,
+            'contractor_id' => $contractor->id,
+            'supplier_id' => $supplier->id,
+            'material' => 'Cabinets',
+            'product' => 'Set',
+            'quantity' => 1,
+            'unit' => 'set',
+            'status' => SupplierPriceRequest::STATUS_QUOTED,
+        ]);
+        $price = $request->prices()->create([
+            'supplier_id' => $supplier->id,
+            'quoted_price' => 850000,
+            'status' => SupplierPrice::STATUS_ACCEPTED,
+        ]);
+        $supplierProposal = $project->procurementProposals()->create([
+            'contractor_id' => $contractor->id,
+            'type' => 'supplier',
+            'status' => 'approved',
+            'selected_supplier_price_id' => $price->id,
+            'submitted_at' => now(),
+            'decided_at' => now(),
+        ]);
+        $supplierProposal->options()->create(['supplier_price_id' => $price->id]);
+
+        $this->actingAs($contractor)->post(route('contractor.budget.submit', $project))->assertRedirect();
+        $submission = BudgetSubmission::query()->first();
+        $this->assertSame(BudgetSubmission::STATUS_AWAITING, $submission->status);
+        $this->assertGreaterThan(0, (float) $submission->platform_fee);
+
+        $this->actingAs($contractor)->post(route('homeowner.budget-submissions.decide', $submission), [
+            'decision' => 'approve',
+        ])->assertForbidden();
+
+        $this->actingAs($homeowner)->post(route('homeowner.budget-submissions.decide', $submission), [
+            'decision' => 'approve',
+        ])->assertRedirect();
+
+        $payment = $submission->fresh()->payment;
+        $this->assertSame(Payment::STATUS_PENDING, $payment->status);
+        $this->assertNotNull($payment->budget_submission_id);
+
+        app(PaymentService::class)->confirmVerified($payment, 'budget-verified');
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
+        $this->assertGreaterThan(0, $payment->allocations()->count());
+        $this->assertTrue($contractor->contractorEarnings()->where('payment_id', $payment->id)->where('status', 'recorded')->exists());
     }
 
     /**

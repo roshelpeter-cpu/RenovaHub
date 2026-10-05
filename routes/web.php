@@ -2,12 +2,16 @@
 
 use App\Http\Controllers\Contractor\BudgetController as ContractorBudgetController;
 use App\Http\Controllers\Contractor\ChangeRequestController as ContractorChangeRequestController;
+use App\Http\Controllers\Contractor\ConstructionFirmController;
 use App\Http\Controllers\Contractor\DashboardController as ContractorDashboardController;
 use App\Http\Controllers\Contractor\DocumentController as ContractorDocumentController;
 use App\Http\Controllers\Contractor\EarningsController as ContractorEarningsController;
+use App\Http\Controllers\Contractor\FinalDesignController;
 use App\Http\Controllers\Contractor\InvitationController as ContractorInvitationController;
+use App\Http\Controllers\Contractor\MaterialRequirementController;
 use App\Http\Controllers\Contractor\MessageController as ContractorMessageController;
 use App\Http\Controllers\Contractor\NotificationController as ContractorNotificationController;
+use App\Http\Controllers\Contractor\ProcurementController as ContractorProcurementController;
 use App\Http\Controllers\Contractor\ProfileController as ContractorProfileController;
 use App\Http\Controllers\Contractor\ProjectController as ContractorProjectController;
 use App\Http\Controllers\Contractor\QuotationController as ContractorQuotationController;
@@ -40,6 +44,7 @@ use App\Http\Controllers\Homeowner\MoodBoardController;
 use App\Http\Controllers\Homeowner\NotificationController;
 use App\Http\Controllers\Homeowner\PaymentController;
 use App\Http\Controllers\Homeowner\ProfessionalController;
+use App\Http\Controllers\Homeowner\ProcurementDecisionController;
 use App\Http\Controllers\Homeowner\ProfileController;
 use App\Http\Controllers\Homeowner\ProjectController;
 use App\Http\Controllers\Homeowner\QuotationController;
@@ -136,6 +141,8 @@ Route::middleware([
         Route::post('projects/{project}/messages', [MessageController::class, 'store'])->name('projects.messages.store');
 
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('proposals/{proposal}/decide', [ProcurementDecisionController::class, 'proposal'])->name('proposals.decide');
+        Route::post('budget-submissions/{submission}/decide', [ProcurementDecisionController::class, 'budget'])->name('budget-submissions.decide');
         Route::get('projects/{project}/activity', [ProjectController::class, 'activity'])->name('projects.activity');
         Route::get('projects/{project}/payments', [PaymentController::class, 'project'])->name('projects.payments');
         Route::get('projects/{project}/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
@@ -214,6 +221,21 @@ Route::middleware([
         Route::post('invitations/{invitation}/accept', [ContractorInvitationController::class, 'accept'])->name('invitations.accept');
         Route::post('invitations/{invitation}/reject', [ContractorInvitationController::class, 'reject'])->name('invitations.reject');
 
+        Route::get('final-designs', [FinalDesignController::class, 'index'])->name('final-designs.index');
+        Route::get('final-designs/{project}', [FinalDesignController::class, 'show'])->name('final-designs.show');
+        Route::get('materials', [MaterialRequirementController::class, 'index'])->name('materials.index');
+
+        Route::get('construction-firms', [ConstructionFirmController::class, 'index'])->name('firms.index');
+        Route::get('construction-firms/{firm}', [ConstructionFirmController::class, 'show'])->name('firms.show');
+        Route::get('construction-firms/{firm}/quote', [ConstructionFirmController::class, 'quote'])->name('firms.quote');
+        Route::post('construction-firms/{firm}/quote', [ConstructionFirmController::class, 'storeQuote'])->name('firms.quote.store');
+
+        Route::get('projects/{project}/compare/suppliers', [ContractorProcurementController::class, 'suppliers'])->name('procurement.suppliers');
+        Route::post('projects/{project}/compare/suppliers', [ContractorProcurementController::class, 'sendSuppliers'])->name('procurement.suppliers.send');
+        Route::get('projects/{project}/compare/firms', [ContractorProcurementController::class, 'firms'])->name('procurement.firms');
+        Route::post('projects/{project}/compare/firms', [ContractorProcurementController::class, 'sendFirms'])->name('procurement.firms.send');
+        Route::post('projects/{project}/firms/{quotation}/assign', [ContractorProcurementController::class, 'assign'])->name('firms.assign');
+
         Route::get('projects', [ContractorProjectController::class, 'index'])->name('projects.index');
         Route::get('projects/{project}', [ContractorProjectController::class, 'show'])->name('projects.show');
         Route::get('projects/{project}/messages', [ContractorMessageController::class, 'project'])->name('projects.messages');
@@ -231,6 +253,7 @@ Route::middleware([
 
         Route::get('budget', [ContractorBudgetController::class, 'index'])->name('budget.index');
         Route::put('budget/{project}', [ContractorBudgetController::class, 'update'])->name('budget.update');
+        Route::post('budget/{project}/submit', [ContractorBudgetController::class, 'submit'])->name('budget.submit');
 
         Route::get('suppliers', [ContractorSupplierController::class, 'index'])->name('suppliers.index');
         Route::get('suppliers/{supplier}', [ContractorSupplierController::class, 'show'])->name('suppliers.show');

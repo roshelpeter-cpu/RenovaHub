@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\BudgetSubmission;
 use App\Models\ContractorEarning;
 use App\Models\Payment;
+use App\Models\PaymentAllocation;
 use App\Models\Project;
 use App\Models\Quotation;
 use App\Models\SupplierOrder;
@@ -97,6 +99,38 @@ class PaymentService
     }
 
     /**
+     * An approved final budget opens the one homeowner payment for the project.
+     * The charge stays pending until PayHere confirms it.
+     */
+    public function openForBudget(BudgetSubmission $submission): Payment
+    {
+        if ($submission->payment_id) {
+            return $submission->payment;
+        }
+
+        $existing = Payment::query()->where('budget_submission_id', $submission->id)->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return $submission->project->payments()->create([
+            'budget_submission_id' => $submission->id,
+            'payer_id' => $submission->project->user_id,
+            'payee_id' => $submission->contractor_id,
+            'reference' => $this->nextReference($submission->project),
+            'amount' => $submission->total,
+            'renovation_amount' => round((float) $submission->total - (float) $submission->platform_fee, 2),
+            'platform_fee' => $submission->platform_fee,
+            'fee_percent' => $submission->fee_percent,
+            'currency' => $submission->project->currency ?: 'LKR',
+            'provider' => 'payhere',
+            'status' => Payment::STATUS_PENDING,
+            'notes' => 'Single project payment for the approved final budget. PayHere has not been called.',
+        ]);
+    }
+
+    /**
      * Only a verified provider callback should call this. There is no
      * contractor route that reaches it.
      */
@@ -129,7 +163,50 @@ class PaymentService
                 ]);
             }
 
+            $submission = $payment->budgetSubmission;
+
+            if ($submission && $payment->allocations()->doesntExist()) {
+                $this->allocateBudget($payment->fresh(), $submission);
+                app(\App\Services\Contractor\ProjectBudgetService::class)->recordEarning($payment->fresh());
+            }
+
             return $payment->fresh();
         });
+    }
+
+    /**
+     * Records who the verified project payment is for. The provider itself is not asked to split the charge.
+     */
+    private function allocateBudget(Payment $payment, BudgetSubmission $submission): void
+    {
+        $project = $submission->project()->with(['procurementProposals.selectedPrice', 'constructionAssignment'])->first();
+        $supplierId = $project?->procurementProposals
+            ->first(fn ($proposal) => $proposal->type === 'supplier' && $proposal->status === 'approved')
+            ?->selectedPrice
+            ?->supplier_id;
+        $firmId = $project?->constructionAssignment?->construction_firm_id;
+
+        $rows = [
+            [PaymentAllocation::DESIGNER, $submission->designer_fee, $project?->designer_id, null, null],
+            [PaymentAllocation::MATERIALS, $submission->materials, null, $supplierId, null],
+            [PaymentAllocation::CONSTRUCTION, $submission->construction, null, null, $firmId],
+            [PaymentAllocation::CONTRACTOR, $submission->contractor_fee, $submission->contractor_id, null, null],
+            [PaymentAllocation::PLATFORM, $submission->platform_fee, null, null, null],
+        ];
+
+        foreach ($rows as [$bucket, $amount, $userId, $supplier, $firm]) {
+            if ((float) $amount <= 0) {
+                continue;
+            }
+
+            $payment->allocations()->create([
+                'project_id' => $submission->project_id,
+                'bucket' => $bucket,
+                'amount' => $amount,
+                'payee_user_id' => $userId,
+                'supplier_id' => $supplier,
+                'construction_firm_id' => $firm,
+            ]);
+        }
     }
 }

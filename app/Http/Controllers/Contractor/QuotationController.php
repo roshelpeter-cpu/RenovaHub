@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Contractor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Contractor\StoreQuotationRequest;
 use App\Http\Requests\Contractor\UpdateQuotationRequest;
+use App\Models\ConstructionFirmQuotation;
 use App\Models\Project;
 use App\Models\Quotation;
+use App\Models\SupplierPrice;
 use App\Services\Contractor\ContractorWorkspaceService;
 use App\Services\Contractor\QuotationService;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +34,20 @@ class QuotationController extends Controller
             ->latest()
             ->get();
 
-        return view('contractor.quotations.index', compact('quotations', 'projects', 'projectId'));
+        $ids = $projects->pluck('id');
+        $prices = SupplierPrice::query()
+            ->whereHas('request', fn ($query) => $query->whereIn('project_id', $ids)->where('contractor_id', $request->user()->id))
+            ->with(['supplier', 'request.project'])
+            ->latest()
+            ->get();
+        $firmQuotes = ConstructionFirmQuotation::query()
+            ->whereIn('project_id', $ids)
+            ->where('contractor_id', $request->user()->id)
+            ->with(['firm', 'project'])
+            ->latest()
+            ->get();
+
+        return view('contractor.quotations.index', compact('quotations', 'projects', 'projectId', 'prices', 'firmQuotes'));
     }
 
     public function create(Request $request, ContractorWorkspaceService $workspace): View

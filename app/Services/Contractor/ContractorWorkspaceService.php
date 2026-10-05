@@ -4,7 +4,6 @@ namespace App\Services\Contractor;
 
 use App\Models\Project;
 use App\Models\ProjectInvitation;
-use App\Models\Quotation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -47,18 +46,26 @@ class ContractorWorkspaceService
                 ->where('role', 'contractor')
                 ->where('status', ProjectInvitation::STATUS_PENDING)
                 ->count(),
-            'quotations' => Quotation::query()
+            'quotations' => \App\Models\SupplierPrice::query()
+                ->whereHas('request', fn ($query) => $query->whereIn('project_id', $projectIds)->where('contractor_id', $contractor->id))
+                ->where('status', \App\Models\SupplierPrice::STATUS_OFFERED)
+                ->count()
+                + \App\Models\ConstructionFirmQuotation::query()
+                    ->whereIn('project_id', $projectIds)
+                    ->where('contractor_id', $contractor->id)
+                    ->where('status', \App\Models\ConstructionFirmQuotation::STATUS_RECEIVED)
+                    ->count(),
+            'awaiting' => \App\Models\ProcurementProposal::query()
                 ->whereIn('project_id', $projectIds)
-                ->where('contractor_id', $contractor->id)
-                ->where('status', Quotation::STATUS_SUBMITTED)
-                ->count(),
-            'changes' => \App\Models\ChangeRequest::query()
-                ->whereIn('project_id', $projectIds)
-                ->whereIn('status', \App\Models\ChangeRequest::openStatuses())
-                ->count(),
+                ->where('status', \App\Models\ProcurementProposal::STATUS_AWAITING)
+                ->count()
+                + \App\Models\BudgetSubmission::query()
+                    ->whereIn('project_id', $projectIds)
+                    ->where('status', \App\Models\BudgetSubmission::STATUS_AWAITING)
+                    ->count(),
+            'value' => (float) (clone $this->accepted($contractor))->sum('estimated_budget'),
             'month_earnings' => (float) $contractor->contractorEarnings()
                 ->where('status', \App\Models\ContractorEarning::STATUS_RECORDED)
-                ->whereBetween('recorded_on', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('net_amount'),
         ];
     }
@@ -84,6 +91,8 @@ class ContractorWorkspaceService
             $query->whereIn('status', [Project::STATUS_PLANNING, Project::STATUS_CONFIRMED, Project::STATUS_AWAITING_TEAM]);
         } elseif ($filter === 'construction') {
             $query->where('status', Project::STATUS_IN_PROGRESS);
+        } elseif ($filter === 'procurement') {
+            $query->whereHas('materialRequirements');
         } elseif ($filter === 'completed') {
             $query->where('status', Project::STATUS_COMPLETED);
         }

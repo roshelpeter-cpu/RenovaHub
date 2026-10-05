@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Contractor;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Services\Contractor\ContractorWorkspaceService;
+use App\Services\Contractor\FinalDesignService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -13,7 +14,7 @@ class ProjectController extends Controller
     public function index(Request $request, ContractorWorkspaceService $workspace): View
     {
         $filter = $request->string('filter')->toString();
-        $filter = in_array($filter, ['all', 'active', 'planning', 'construction', 'completed'], true) ? $filter : 'all';
+        $filter = in_array($filter, ['all', 'active', 'planning', 'procurement', 'construction', 'completed'], true) ? $filter : 'all';
 
         return view('contractor.projects.index', [
             'projects' => $workspace->cards($request->user(), $filter === 'all' ? null : $filter),
@@ -23,10 +24,10 @@ class ProjectController extends Controller
 
     public function show(Request $request, Project $project, ContractorWorkspaceService $workspace): View
     {
-        return $this->section($request, $project, 'overview', $workspace);
+        return $this->section($request, $project, 'overview', $workspace, app(FinalDesignService::class));
     }
 
-    public function section(Request $request, Project $project, string $section, ContractorWorkspaceService $workspace): View
+    public function section(Request $request, Project $project, string $section, ContractorWorkspaceService $workspace, FinalDesignService $designs): View
     {
         abort_unless(in_array($section, ['overview', 'quotations', 'budget', 'suppliers', 'tasks', 'documents', 'change-requests'], true), 404);
 
@@ -47,11 +48,14 @@ class ProjectController extends Controller
             'supplierOrders.payment',
             'supplierPriceRequests.supplier',
             'supplierPriceRequests.prices',
+            'budgetSubmissions',
+            'constructionAssignment.firm',
         ]);
 
         return view('contractor.projects.show', [
             'project' => $project,
             'section' => $section,
+            'timeline' => $designs->timeline($project),
         ]);
     }
 }

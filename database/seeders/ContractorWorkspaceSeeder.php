@@ -11,11 +11,19 @@ use App\Models\Project;
 use App\Models\ProjectInvitation;
 use App\Models\ProjectTask;
 use App\Models\Quotation;
+use App\Models\ConstructionAssignment;
+use App\Models\ConstructionFirm;
+use App\Models\ConstructionFirmQuotation;
+use App\Models\DesignConcept;
+use App\Models\MaterialRequirement;
+use App\Models\ProcurementProposal;
 use App\Models\Supplier;
 use App\Models\SupplierCategory;
 use App\Models\SupplierOrder;
 use App\Models\SupplierPriceRequest;
 use App\Models\User;
+use App\Services\Contractor\ProcurementService;
+use App\Services\Contractor\ProjectBudgetService;
 use App\Services\Contractor\SupplierOrderService;
 use App\Services\Contractor\SupplierService;
 use App\Services\ConversationService;
@@ -144,8 +152,183 @@ class ContractorWorkspaceSeeder extends Seeder
         $this->change($coastal, $homeowner);
         $this->messages($homeowner, $designer, $kavinda, $support, $apartment);
         $this->activity($apartment, $coastal, $homeowner, $kavinda);
+        $this->procurement($homeowner, $designer, $kavinda, $apartment, $coastal);
         $this->portfolio($profile);
         $this->notify($kavinda, $apartment);
+    }
+
+    /**
+     * Approved design, material list, firm comparison and one budget.
+     * Homeowner approval is applied through the same services the UI uses.
+     */
+    private function procurement(User $homeowner, ?User $designer, User $contractor, Project $apartment, Project $coastal): void
+    {
+        $apartment->budgetItems()->updateOrCreate(
+            ['category' => 'Contractor Fee'],
+            ['amount' => 350000, 'spent_percent' => 0, 'sort_order' => 8],
+        );
+
+        $concept = DesignConcept::query()->updateOrCreate(
+            ['project_id' => $apartment->id, 'title' => 'Approved final design package'],
+            [
+                'designer_id' => $designer?->id ?? $homeowner->id,
+                'description' => 'Kitchen, living room and timber flooring approved for construction.',
+                'notes' => 'Use the warm oak sample and the soft-close cabinet specification.',
+                'status' => DesignConcept::STATUS_APPROVED,
+                'submitted_at' => now()->subDays(12),
+                'approved_at' => now()->subDays(8),
+            ],
+        );
+
+        if ($concept->files()->doesntExist()) {
+            foreach ([
+                'images/renova/about-interior.jpg',
+                'images/renova/feature-plans.jpg',
+                'images/renova/feature-green.jpg',
+                'images/renova/hero.jpg',
+                'images/renova/feature-docs.jpg',
+            ] as $index => $path) {
+                $concept->files()->create([
+                    'kind' => $index === 1 ? 'floor_plan' : 'image',
+                    'path' => $path,
+                    'caption' => 'Approved view '.($index + 1),
+                ]);
+            }
+        }
+
+        foreach ([
+            ['Porcelain Tile', 'Living Room', 'Flooring & Tiles', 450, 'sq.ft', '600x600 matte', 450000],
+            ['Kitchen Cabinet', 'Kitchen', 'Kitchen & Cabinets', 1, 'set', 'Warm oak, soft-close', 850000],
+            ['Countertop', 'Kitchen', 'Kitchen & Cabinets', 35, 'sq.ft', 'Quartz, 20mm', 180000],
+            ['Light Fixture', 'Whole House', 'Lighting', 18, 'units', 'Warm white', 120000],
+        ] as [$name, $room, $category, $qty, $unit, $spec, $value]) {
+            MaterialRequirement::query()->updateOrCreate(
+                ['project_id' => $apartment->id, 'name' => $name],
+                [
+                    'design_concept_id' => $concept->id,
+                    'room' => $room,
+                    'category' => $category,
+                    'quantity' => $qty,
+                    'unit' => $unit,
+                    'specification' => $spec,
+                    'estimated_value' => $value,
+                    'status' => 'quoted',
+                ],
+            );
+        }
+
+        $photos = ['images/renova/about-exterior.jpg', 'images/renova/feature-tasks.jpg', 'images/renova/feature-progress.jpg'];
+        $firmRows = [
+            ['buildright-construction', 'BuildRight Construction', 'Colombo', 'Structural and fit-out', 4.7, 86, 14, 120, 1800000],
+            ['urban-builders', 'Urban Builders', 'Colombo', 'Interior construction', 4.8, 64, 11, 90, 1650000],
+            ['coastal-structures', 'Coastal Structures', 'Galle', 'Villas and extensions', 4.6, 41, 9, 70, 1950000],
+            ['prime-structures', 'Prime Structures', 'Negombo', 'Residential builds', 4.5, 33, 8, 55, 1500000],
+        ];
+
+        foreach ($firmRows as [$slug, $name, $city, $spec, $rating, $reviews, $years, $done, $start]) {
+            ConstructionFirm::query()->updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $name,
+                    'city' => $city,
+                    'location' => $city.', Sri Lanka',
+                    'specialisation' => $spec,
+                    'about' => $name.' builds residential renovations with a site team, programme and defect liability period.',
+                    'rating' => $rating,
+                    'review_count' => $reviews,
+                    'years_experience' => $years,
+                    'completed_projects' => $done,
+                    'starting_price' => $start,
+                    'portfolio' => $photos,
+                    'highlights' => ['Licensed site team', 'Written programme', 'Defect liability included'],
+                ],
+            );
+        }
+
+        $procurement = app(ProcurementService::class);
+
+        if (ConstructionFirmQuotation::query()->where('project_id', $apartment->id)->doesntExist()) {
+            $offers = [
+                ['buildright-construction', 1800000, 90],
+                ['urban-builders', 1650000, 105],
+                ['coastal-structures', 1950000, 75],
+            ];
+            foreach ($offers as [$slug, $price, $days]) {
+                $procurement->recordFirmQuote($contractor, $apartment, [
+                    'construction_firm_id' => ConstructionFirm::query()->where('slug', $slug)->value('id'),
+                    'price' => $price,
+                    'duration_days' => $days,
+                    'start_date' => '2026-10-20',
+                    'completion_date' => now()->parse('2026-10-20')->addDays($days)->toDateString(),
+                    'scope' => 'Labour, site supervision and finishing to the approved design.',
+                    'terms' => 'Mobilisation after the homeowner payment is verified.',
+                    'warranty' => '12 months',
+                    'notes' => null,
+                ]);
+            }
+
+            $ids = ConstructionFirmQuotation::query()->where('project_id', $apartment->id)->pluck('id')->all();
+            $proposal = $procurement->sendFirmOptions($contractor, $apartment, $ids);
+            $chosen = $proposal->options()->whereHas('quotation', fn ($query) => $query->where('price', 1650000))->first();
+            $procurement->decide($homeowner, $proposal, 'approve', $chosen->id, 'Urban Builders matches the programme.');
+            $procurement->assign($contractor, $apartment, $chosen->quotation);
+        }
+
+        if (! ProcurementProposal::query()->where('project_id', $coastal->id)->where('type', ProcurementProposal::TYPE_FIRM)->exists()
+            && DesignConcept::query()->where('project_id', $coastal->id)->where('status', DesignConcept::STATUS_APPROVED)->doesntExist()) {
+            DesignConcept::query()->create([
+                'project_id' => $coastal->id,
+                'designer_id' => $designer?->id ?? $homeowner->id,
+                'title' => 'Coastal villa final design',
+                'description' => 'Approved terrace and bathroom package.',
+                'status' => DesignConcept::STATUS_APPROVED,
+                'submitted_at' => now()->subDays(4),
+                'approved_at' => now()->subDays(2),
+            ]);
+        }
+
+        if (ConstructionFirmQuotation::query()->where('project_id', $coastal->id)->doesntExist()) {
+            foreach (['buildright-construction', 'prime-structures'] as $index => $slug) {
+                $procurement->recordFirmQuote($contractor, $coastal, [
+                    'construction_firm_id' => ConstructionFirm::query()->where('slug', $slug)->value('id'),
+                    'price' => 2400000 + ($index * 150000),
+                    'duration_days' => 120,
+                    'start_date' => '2026-11-02',
+                    'completion_date' => '2027-03-02',
+                    'scope' => 'Pool deck and bathroom construction.',
+                    'terms' => 'Subject to homeowner approval.',
+                    'warranty' => '12 months',
+                    'notes' => null,
+                ]);
+            }
+            $ids = ConstructionFirmQuotation::query()->where('project_id', $coastal->id)->pluck('id')->all();
+            $procurement->sendFirmOptions($contractor, $coastal, $ids);
+        }
+
+        if (! $apartment->budgetSubmissions()->whereIn('status', ['awaiting_homeowner', 'approved'])->exists()
+            && $apartment->procurementProposals()->where('type', 'supplier')->where('status', 'approved')->doesntExist()) {
+            $price = \App\Models\SupplierPrice::query()
+                ->whereHas('request', fn ($query) => $query->where('project_id', $apartment->id)->where('product', 'Custom Kitchen Cabinet Set'))
+                ->first();
+
+            if ($price) {
+                $proposal = ProcurementProposal::query()->create([
+                    'project_id' => $apartment->id,
+                    'contractor_id' => $contractor->id,
+                    'type' => ProcurementProposal::TYPE_SUPPLIER,
+                    'status' => ProcurementProposal::STATUS_APPROVED,
+                    'selected_supplier_price_id' => $price->id,
+                    'submitted_at' => now()->subDay(),
+                    'decided_at' => now()->subDay(),
+                ]);
+                $proposal->options()->create(['supplier_price_id' => $price->id]);
+            }
+        }
+
+        if (! $apartment->budgetSubmissions()->whereIn('status', ['awaiting_homeowner', 'approved'])->exists()
+            && ConstructionAssignment::query()->where('project_id', $apartment->id)->exists()) {
+            app(ProjectBudgetService::class)->submit($contractor, $apartment->fresh());
+        }
     }
 
     private function project(User $owner, ?User $designer, ?User $contractor, string $name, string $city, string $typeLabel, string $property, string $description, int $progress, string $status, string $milestone, string $due, array $photos, bool $accepted, float $budget, string $inviteStatus = ProjectInvitation::STATUS_ACCEPTED): Project

@@ -64,6 +64,10 @@ class ConversationService
             $query->whereHas('participants', fn ($inner) => $inner->where('users.role', 'homeowner')->where('users.id', '!=', $homeowner->id));
         } elseif ($tab === 'support') {
             $query->where('kind', 'support');
+        } elseif ($tab === 'suppliers') {
+            $query->where('kind', 'supplier');
+        } elseif ($tab === 'firms') {
+            $query->where('kind', 'construction_firm');
         }
 
         $conversations = $query->get();

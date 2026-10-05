@@ -17,7 +17,7 @@
                 @php
                     $tabs = match (true) {
                         auth()->user()->isDesigner() => ['all' => 'All', 'homeowners' => 'Homeowners', 'contractors' => 'Contractors', 'support' => 'Support'],
-                        auth()->user()->isContractor() => ['all' => 'All', 'homeowners' => 'Homeowners', 'designers' => 'Designers', 'support' => 'Support'],
+                        auth()->user()->isContractor() => ['all' => 'All', 'homeowners' => 'Homeowners', 'designers' => 'Designers', 'suppliers' => 'Suppliers', 'firms' => 'Construction Firms'],
                         default => ['all' => 'All', 'designers' => 'Designers', 'contractors' => 'Contractors', 'support' => 'Support'],
                     };
                 @endphp

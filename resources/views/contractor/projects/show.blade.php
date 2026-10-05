@@ -16,13 +16,18 @@
                 </div>
             </article>
             <article class="rounded-[1.4rem] border border-[#ece7dc] bg-white p-5 shadow-sm">
-                <h2 class="rh-serif text-2xl text-[#123D2B]">Approved design</h2>
-                <p class="mt-3 text-sm text-[#66756C]">The designer prepares the design. You quote and build after the homeowner approves it.</p>
-                @if ($project->moodBoard?->approved_at)
-                    <p class="mt-3 text-sm text-[#123D2B]">Mood board approved {{ $project->moodBoard->approved_at->format('j M Y') }}.</p>
-                @else
-                    <p class="mt-3 text-sm text-[#66756C]">No approved mood board is recorded yet.</p>
-                @endif
+                <h2 class="rh-serif text-2xl text-[#123D2B]">Project workflow</h2>
+                <ol class="mt-4 space-y-3">
+                    @foreach ($timeline as $stage)
+                        <li class="flex gap-3">
+                            <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full {{ $stage['state'] === 'completed' ? 'bg-[#1F7A4D]' : ($stage['state'] === 'current' ? 'bg-[#C4A574]' : 'bg-[#ddd6c8]') }}"></span>
+                            <span>
+                                <span class="block text-sm text-[#123D2B]">{{ $stage['label'] }}</span>
+                                <span class="block text-xs text-[#66756C]">{{ ucfirst($stage['state']) }} · {{ $stage['detail'] }}</span>
+                            </span>
+                        </li>
+                    @endforeach
+                </ol>
             </article>
         </div>
     @elseif ($section === 'quotations')
